@@ -1,6 +1,7 @@
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { ChartContainer } from "@/components/ui/chart";
+import { useActivityChart } from "../hooks/useActivityChart";
+import { ActivityChartContent } from "./ActivityChartContent";
 
 interface ActivityBarChartProps {
   data: Array<{ name: string; sessions: number }>;
@@ -16,23 +17,14 @@ interface ActivityBarChartProps {
 }
 
 export function ActivityBarChart({ data, config }: ActivityBarChartProps) {
+  const chartData = useActivityChart(data, config);
+
   return (
     <ChartContainer className="h-[300px]" config={config}>
-      <BarChart
-        data={data}
-        margin={{ top: 5, right: 10, left: 10, bottom: 20 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.1} />
-        <XAxis dataKey="name" />
-        <YAxis />
-        <Tooltip />
-        <Bar 
-          dataKey="sessions" 
-          fill="var(--color-sessions)" 
-          name="Sessions"
-          radius={[4, 4, 0, 0]}
-        />
-      </BarChart>
+      <ActivityChartContent 
+        data={chartData.data}
+        chartOptions={chartData.chartOptions}
+      />
     </ChartContainer>
   );
 }
