@@ -9,7 +9,218 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      doctor_patient_relationships: {
+        Row: {
+          created_at: string
+          doctor_id: string
+          id: string
+          patient_id: string
+          referral_code: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          doctor_id: string
+          id?: string
+          patient_id: string
+          referral_code?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          doctor_id?: string
+          id?: string
+          patient_id?: string
+          referral_code?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctor_patient_relationships_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "doctor_patient_relationships_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ecg_recordings: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration: number
+          ecg_data: Json
+          flags: Json | null
+          heart_rate: number | null
+          id: string
+          patient_id: string
+          recorded_at: string
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration: number
+          ecg_data: Json
+          flags?: Json | null
+          heart_rate?: number | null
+          id?: string
+          patient_id: string
+          recorded_at?: string
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration?: number
+          ecg_data?: Json
+          flags?: Json | null
+          heart_rate?: number | null
+          id?: string
+          patient_id?: string
+          recorded_at?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ecg_recordings_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invite_codes: {
+        Row: {
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          patient_id: string
+          used: boolean | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          patient_id: string
+          used?: boolean | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          patient_id?: string
+          used?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invite_codes_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          first_name: string | null
+          id: string
+          last_name: string | null
+          role: Database["public"]["Enums"]["user_role"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          first_name?: string | null
+          id: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          role?: Database["public"]["Enums"]["user_role"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          content: string | null
+          created_at: string
+          doctor_id: string | null
+          ecg_recording_id: string | null
+          id: string
+          patient_id: string
+          pdf_url: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          ecg_recording_id?: string | null
+          id?: string
+          patient_id: string
+          pdf_url?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          doctor_id?: string | null
+          ecg_recording_id?: string | null
+          id?: string
+          patient_id?: string
+          pdf_url?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_ecg_recording_id_fkey"
+            columns: ["ecg_recording_id"]
+            isOneToOne: false
+            referencedRelation: "ecg_recordings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -18,7 +229,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      user_role: "patient" | "doctor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +344,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      user_role: ["patient", "doctor"],
+    },
   },
 } as const
