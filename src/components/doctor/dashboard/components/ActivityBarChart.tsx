@@ -1,6 +1,7 @@
 
 import { ChartContainer } from "@/components/ui/chart";
 import { useActivityChart } from "../hooks/useActivityChart";
+import { useChartDimensions } from "../hooks/useChartDimensions";
 import { ActivityChartContent } from "./ActivityChartContent";
 
 interface ActivityBarChartProps {
@@ -18,13 +19,17 @@ interface ActivityBarChartProps {
 
 export function ActivityBarChart({ data, config }: ActivityBarChartProps) {
   const chartData = useActivityChart(data, config);
+  const dimensions = useChartDimensions();
 
   return (
-    <ChartContainer className="h-[300px]" config={config}>
-      <ActivityChartContent 
-        data={chartData.data}
-        chartOptions={chartData.chartOptions}
-      />
-    </ChartContainer>
+    <div className="chart-container">
+      <ChartContainer className="h-[300px]" config={config}>
+        <ActivityChartContent 
+          data={chartData.data}
+          chartOptions={chartData.chartOptions}
+          dimensions={dimensions}
+        />
+      </ChartContainer>
+    </div>
   );
 }
