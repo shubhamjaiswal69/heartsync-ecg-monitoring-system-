@@ -1,5 +1,5 @@
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { 
@@ -9,8 +9,12 @@ import {
   History, 
   FileText, 
   Users, 
-  LogOut 
+  LogOut,
+  Menu,
+  X
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -20,14 +24,20 @@ interface DashboardLayoutProps {
 const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { signOut, loading } = useAuth();
   
   const isActive = (path: string) => {
     return location.pathname === path;
   };
 
-  const handleLogout = () => {
-    // In a real app with Supabase, this would sign out the user
-    navigate("/");
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   const patientLinks = [
@@ -83,10 +93,60 @@ const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
 
   const links = userType === "patient" ? patientLinks : doctorLinks;
 
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
-      {/* Sidebar */}
-      <div className="w-full md:w-64 bg-card border-r border-b md:border-b-0 md:min-h-screen">
+      {/* Sidebar - Mobile */}
+      <div 
+        className={cn(
+          "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden",
+          sidebarOpen ? "block" : "hidden"
+        )}
+      >
+        <div className="fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-lg animate-in slide-in-from-left">
+          <div className="flex items-center justify-between p-4 border-b">
+            <Link to="/" className="flex items-center gap-2">
+              <span className="text-xl font-bold text-primary">❤️ HeartSync</span>
+            </Link>
+            <Button variant="ghost" size="icon" onClick={toggleSidebar}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+          <nav className="p-4 space-y-2">
+            {links.map((link) => (
+              <Link
+                key={link.path}
+                to={link.path}
+                className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors
+                  ${isActive(link.path) 
+                    ? "bg-primary text-primary-foreground" 
+                    : "hover:bg-muted text-foreground"
+                  }`
+                }
+                onClick={() => setSidebarOpen(false)}
+              >
+                {link.icon}
+                <span>{link.name}</span>
+              </Link>
+            ))}
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 px-4 py-3 mt-6"
+              onClick={handleLogout}
+              disabled={loading}
+            >
+              <LogOut className="h-5 w-5 mr-3" />
+              <span>Logout</span>
+            </Button>
+          </nav>
+        </div>
+      </div>
+
+      {/* Sidebar - Desktop */}
+      <div className="hidden md:block w-64 bg-card border-r md:min-h-screen">
         <div className="p-4 border-b">
           <Link to="/" className="flex items-center gap-2">
             <span className="text-xl font-bold text-primary">❤️ HeartSync</span>
@@ -112,6 +172,7 @@ const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
             variant="ghost" 
             className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 px-4 py-3 mt-6"
             onClick={handleLogout}
+            disabled={loading}
           >
             <LogOut className="h-5 w-5 mr-3" />
             <span>Logout</span>
@@ -121,12 +182,28 @@ const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
-        <header className="bg-card border-b p-4">
-          <h1 className="text-xl font-semibold">
-            {userType === "patient" ? "Patient Portal" : "Doctor Portal"}
-          </h1>
+        <header className="bg-card border-b p-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={toggleSidebar}>
+              <Menu className="h-5 w-5" />
+            </Button>
+            <h1 className="text-xl font-semibold">
+              {userType === "patient" ? "Patient Portal" : "Doctor Portal"}
+            </h1>
+          </div>
+          <div className="md:hidden">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="text-destructive" 
+              onClick={handleLogout}
+              disabled={loading}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          </div>
         </header>
-        <main className="flex-1 p-4 md:p-6">
+        <main className="flex-1 p-4 md:p-6 overflow-auto">
           {children}
         </main>
       </div>
