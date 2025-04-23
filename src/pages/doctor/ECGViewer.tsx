@@ -1,18 +1,17 @@
-
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { ChartContainer } from "@/components/ui/chart";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Activity, FileText } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Activity, Download, Save, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { HeartRateCard } from "@/components/ecg/HeartRateCard";
+import { PatientInfoCard } from "@/components/ecg/PatientInfoCard";
+import { ECGChart } from "@/components/ecg/ECGChart";
+import { NotesSection } from "@/components/ecg/NotesSection";
 
 // Mock patients
 const patients = [
@@ -68,16 +67,6 @@ const ecgPatterns = [
   { id: "tachycardia", name: "Tachycardia" }
 ];
 
-const chartConfig = {
-  ecg: {
-    label: "ECG",
-    theme: {
-      light: "#9b87f5",
-      dark: "#9b87f5"
-    }
-  }
-};
-
 const DoctorECGViewer = () => {
   const { patientId } = useParams();
   const [selectedPatient, setSelectedPatient] = useState(patientId || "1");
@@ -88,19 +77,16 @@ const DoctorECGViewer = () => {
   const [heartRate, setHeartRate] = useState(75);
   const { toast } = useToast();
   
-  // Get patient info
   const patient = patients.find(p => p.id === selectedPatient) || patients[0];
   
   const handlePatientChange = (value: string) => {
     setSelectedPatient(value);
-    // In a real app, this would fetch the patient's actual ECG data
   };
   
   const handlePatternChange = (value: string) => {
     setPatternType(value);
     setEcgData(generateECGData(value));
     
-    // Update heart rate based on pattern
     if (value === "normal") setHeartRate(72);
     else if (value === "tachycardia") setHeartRate(110);
     else if (value === "arrhythmia") setHeartRate(88);
@@ -109,17 +95,14 @@ const DoctorECGViewer = () => {
   const handleLiveToggle = (checked: boolean) => {
     setIsLive(checked);
     
-    // If turning on live view, start updating data
     if (checked) {
       const interval = setInterval(() => {
         setEcgData(generateECGData(patternType));
-        // Random fluctuation in heart rate
         setHeartRate(prev => prev + (Math.random() > 0.5 ? 1 : -1));
       }, 1000);
       
       window.sessionStorage.setItem('doctorEcgInterval', interval.toString());
     } else {
-      // Clear interval when turning off live view
       const intervalId = window.sessionStorage.getItem('doctorEcgInterval');
       if (intervalId) {
         clearInterval(parseInt(intervalId));
@@ -154,17 +137,7 @@ const DoctorECGViewer = () => {
               View and analyze patient ECG data
             </p>
           </div>
-          <Card className="w-full md:w-auto">
-            <CardContent className="p-4 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium">Heart Rate</p>
-                <p className="text-3xl font-bold">{heartRate} <span className="text-base">BPM</span></p>
-              </div>
-              <div className="rounded-full bg-primary/10 p-3">
-                <Activity className="h-6 w-6 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
+          <HeartRateCard heartRate={heartRate} />
         </div>
 
         <Card>
@@ -225,31 +198,13 @@ const DoctorECGViewer = () => {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label>Patient Details</Label>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Name</span>
-                        <span className="text-sm font-medium">{patient.name}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Age</span>
-                        <span className="text-sm font-medium">{patient.age} years</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Condition</span>
-                        <span className="text-sm font-medium">{patient.condition}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Heart Rate</span>
-                        <span className="text-sm font-medium">{heartRate} BPM</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+              <PatientInfoCard
+                patient={patient}
+                heartRate={heartRate}
+                selectedPatient={selectedPatient}
+                onPatientChange={handlePatientChange}
+                patients={patients}
+              />
             </div>
           </CardContent>
         </Card>
@@ -262,76 +217,17 @@ const DoctorECGViewer = () => {
           </TabsList>
           
           <TabsContent value="real-time" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>ECG Waveform</CardTitle>
-                <CardDescription>
-                  {isLive ? "Live electrocardiogram data" : "Sample electrocardiogram data"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="min-h-[300px]">
-                <ChartContainer 
-                  className="h-[300px]" 
-                  config={chartConfig}
-                >
-                  <LineChart
-                    data={ecgData}
-                    margin={{
-                      top: 5,
-                      right: 10,
-                      left: 10,
-                      bottom: 5,
-                    }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="#333" opacity={0.1} />
-                    <XAxis dataKey="time" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="var(--color-ecg)" 
-                      strokeWidth={2} 
-                      dot={false}
-                      name="ECG"
-                    />
-                  </LineChart>
-                </ChartContainer>
-              </CardContent>
-              <CardFooter className="flex flex-wrap gap-4">
-                <Button onClick={handleGenerateReport}>
-                  <FileText className="mr-2 h-4 w-4" />
-                  Generate Report
-                </Button>
-                <Button variant="outline">
-                  <Download className="mr-2 h-4 w-4" />
-                  Download ECG Data
-                </Button>
-              </CardFooter>
-            </Card>
+            <ECGChart 
+              ecgData={ecgData}
+              isLive={isLive}
+              onGenerateReport={handleGenerateReport}
+            />
             
-            <Card>
-              <CardHeader>
-                <CardTitle>Notes & Observations</CardTitle>
-                <CardDescription>
-                  Add your medical notes for this patient's ECG
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Textarea 
-                  placeholder="Enter your medical observations and notes here..."
-                  className="min-h-[150px]"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                />
-              </CardContent>
-              <CardFooter>
-                <Button onClick={handleSaveNotes}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Save Notes
-                </Button>
-              </CardFooter>
-            </Card>
+            <NotesSection
+              notes={notes}
+              onNotesChange={setNotes}
+              onSaveNotes={handleSaveNotes}
+            />
           </TabsContent>
           
           <TabsContent value="analysis">
