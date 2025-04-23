@@ -1,26 +1,28 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Activity, FileText } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { HeartRateCard } from "@/components/ecg/HeartRateCard";
 import { PatientInfoCard } from "@/components/ecg/PatientInfoCard";
 import { ECGChart } from "@/components/ecg/ECGChart";
 import { NotesSection } from "@/components/ecg/NotesSection";
+import { PatternSelector } from "@/components/ecg/PatternSelector";
+import { LiveModeToggle } from "@/components/ecg/LiveModeToggle";
+import { AnalysisTab } from "@/components/ecg/AnalysisTab";
+import { HistoryTab } from "@/components/ecg/HistoryTab";
 
-// Mock patients
+// Mock patients data - keep the same as before
 const patients = [
   { id: "1", name: "John Doe", age: 45, condition: "Arrhythmia" },
   { id: "2", name: "Sarah Johnson", age: 62, condition: "Hypertension" },
   { id: "3", name: "Michael Smith", age: 57, condition: "Post-heart attack" }
 ];
 
-// Mock ECG data with different patterns
+// Mock ECG data generation function - keep the same as before
 const generateECGData = (patternType = "normal", length = 100) => {
   const mockData = [];
   const baseValue = 80;
@@ -59,13 +61,6 @@ const generateECGData = (patternType = "normal", length = 100) => {
   }
   return mockData;
 };
-
-// ECG pattern types with labels
-const ecgPatterns = [
-  { id: "normal", name: "Normal Sinus Rhythm" },
-  { id: "arrhythmia", name: "Arrhythmia" },
-  { id: "tachycardia", name: "Tachycardia" }
-];
 
 const DoctorECGViewer = () => {
   const { patientId } = useParams();
@@ -149,14 +144,7 @@ const DoctorECGViewer = () => {
                   Select a patient to view their ECG data
                 </CardDescription>
               </div>
-              <div className="flex items-center space-x-2">
-                <Switch 
-                  id="live-mode" 
-                  checked={isLive} 
-                  onCheckedChange={handleLiveToggle} 
-                />
-                <Label htmlFor="live-mode">Live Mode</Label>
-              </div>
+              <LiveModeToggle isLive={isLive} onToggle={handleLiveToggle} />
             </div>
           </CardHeader>
           <CardContent>
@@ -178,24 +166,10 @@ const DoctorECGViewer = () => {
                   </Select>
                 </div>
                 
-                <div className="space-y-2">
-                  <Label>View Pattern</Label>
-                  <Select value={patternType} onValueChange={handlePatternChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Pattern" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {ecgPatterns.map(pattern => (
-                        <SelectItem key={pattern.id} value={pattern.id}>
-                          {pattern.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    For demonstration purposes only. Select different patterns to view sample ECG data.
-                  </p>
-                </div>
+                <PatternSelector 
+                  patternType={patternType}
+                  onPatternChange={handlePatternChange}
+                />
               </div>
               
               <PatientInfoCard
@@ -231,42 +205,11 @@ const DoctorECGViewer = () => {
           </TabsContent>
           
           <TabsContent value="analysis">
-            <Card className="border-none">
-              <CardHeader>
-                <CardTitle>ECG Analysis</CardTitle>
-                <CardDescription>
-                  Advanced analysis tools will be available here
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center py-10">
-                <Activity className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">Analysis Tool Coming Soon</h3>
-                <p className="text-center text-sm text-muted-foreground max-w-md mt-2">
-                  Advanced ECG analysis features will be available in a future update. 
-                  These will include automated detection of anomalies, 
-                  comparison with previous recordings, and diagnostic suggestions.
-                </p>
-              </CardContent>
-            </Card>
+            <AnalysisTab />
           </TabsContent>
           
           <TabsContent value="history">
-            <Card className="border-none">
-              <CardHeader>
-                <CardTitle>Patient ECG History</CardTitle>
-                <CardDescription>
-                  View historical ECG recordings for this patient
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center justify-center py-10">
-                <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium">Historical Data Coming Soon</h3>
-                <p className="text-center text-sm text-muted-foreground max-w-md mt-2">
-                  The patient history view will display past ECG recordings, allowing you to
-                  track changes over time and compare different sessions.
-                </p>
-              </CardContent>
-            </Card>
+            <HistoryTab />
           </TabsContent>
         </Tabs>
       </div>
