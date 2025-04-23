@@ -9,7 +9,7 @@ interface ActivityChartContentProps {
       dataKey: string;
       fill: string;
       name: string;
-      radius: number[];
+      radius: [number, number, number, number];
     };
     gridProps: {
       strokeDasharray: string;

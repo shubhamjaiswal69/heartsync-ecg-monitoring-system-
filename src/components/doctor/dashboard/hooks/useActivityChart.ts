@@ -23,7 +23,7 @@ export const useActivityChart = (data: ChartDataPoint[], config: ChartConfig) =>
       dataKey: "sessions",
       fill: "var(--color-sessions)",
       name: "Sessions",
-      radius: [4, 4, 0, 0]
+      radius: [4, 4, 0, 0] as [number, number, number, number]
     },
     gridProps: {
       strokeDasharray: "3 3",
