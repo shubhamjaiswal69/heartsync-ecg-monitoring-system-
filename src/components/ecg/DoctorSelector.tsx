@@ -37,11 +37,12 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
           return;
         }
 
-        // Get all accepted connections where the current user is the patient
+        // Updated query to fix the relationship ambiguity
         const { data, error } = await supabase
           .from('doctor_patient_relationships')
           .select(`
-            doctor:doctor_id(
+            doctor_id,
+            doctor:profiles!doctor_patient_relationships_doctor_id_fkey(
               id,
               first_name,
               last_name,
@@ -53,8 +54,14 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
 
         if (error) throw error;
 
-        // Extract doctor data from relationships
-        const connectedDoctors = data.map(item => item.doctor) as Doctor[];
+        // Extract and transform doctor data from relationships
+        const connectedDoctors = data.map(item => ({
+          id: item.doctor.id,
+          first_name: item.doctor.first_name,
+          last_name: item.doctor.last_name,
+          email: item.doctor.email
+        }));
+        
         setDoctors(connectedDoctors);
 
         // Set first doctor as default if there's one and none is selected
