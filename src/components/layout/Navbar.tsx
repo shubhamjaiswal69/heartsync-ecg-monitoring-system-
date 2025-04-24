@@ -8,10 +8,12 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Menu, X } from "lucide-react";
+import { ProfileDropdown } from "./ProfileDropdown";
+import { useAuth } from "@/context/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const { user } = useAuth();
   const closeSheet = () => setIsOpen(false);
 
   return (
@@ -29,12 +31,18 @@ const Navbar = () => {
         </div>
         
         <div className="hidden md:flex items-center space-x-4">
-          <Button variant="outline" asChild>
-            <Link to="/login">Login</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/register">Register</Link>
-          </Button>
+          {user ? (
+            <ProfileDropdown />
+          ) : (
+            <>
+              <Button variant="outline" asChild>
+                <Link to="/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/register">Register</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         {/* Mobile Navigation */}
@@ -65,12 +73,24 @@ const Navbar = () => {
                 </Link>
               </nav>
               <div className="flex flex-col gap-4 mt-auto border-t py-6">
-                <Button variant="outline" asChild className="w-full" onClick={closeSheet}>
-                  <Link to="/login">Login</Link>
-                </Button>
-                <Button asChild className="w-full" onClick={closeSheet}>
-                  <Link to="/register">Register</Link>
-                </Button>
+                {user ? (
+                  <Link
+                    to={`/profile`}
+                    className="text-foreground px-4 py-2 rounded-md hover:bg-muted"
+                    onClick={closeSheet}
+                  >
+                    Profile Settings
+                  </Link>
+                ) : (
+                  <>
+                    <Button variant="outline" asChild className="w-full" onClick={closeSheet}>
+                      <Link to="/login">Login</Link>
+                    </Button>
+                    <Button asChild className="w-full" onClick={closeSheet}>
+                      <Link to="/register">Register</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </SheetContent>
@@ -78,6 +98,6 @@ const Navbar = () => {
       </div>
     </nav>
   );
-};
+}
 
 export default Navbar;

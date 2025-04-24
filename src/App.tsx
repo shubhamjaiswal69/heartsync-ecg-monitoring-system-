@@ -19,6 +19,7 @@ import DoctorECGViewer from "./pages/doctor/ECGViewer";
 import DoctorReports from "./pages/doctor/Reports";
 import Features from "./pages/Features";
 import About from "./pages/About";
+import ProfilePage from "./pages/profile/ProfilePage";
 
 const queryClient = new QueryClient();
 
@@ -53,6 +54,10 @@ const App = () => (
             
             {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />
+            
+            {/* Profile Routes */}
+            <Route path="/patient/profile" element={<ProfilePage />} />
+            <Route path="/doctor/profile" element={<ProfilePage />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
