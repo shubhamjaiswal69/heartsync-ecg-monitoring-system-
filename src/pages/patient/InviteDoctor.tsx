@@ -1,33 +1,19 @@
-
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Copy, Check, Mail } from "lucide-react";
+import { Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/layout/DashboardLayout";
+import { ReferralCodeGenerator } from "@/components/invite/ReferralCodeGenerator";
+import { ActiveReferralCodes } from "@/components/invite/ActiveReferralCodes";
 
 const PatientInviteDoctor = () => {
   const [email, setEmail] = useState("");
-  const [copied, setCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  // Mock referral code for demo
-  const referralCode = "HEARTSYNC-12345";
-
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(referralCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    toast({
-      title: "Copied to clipboard",
-      description: "Referral code has been copied to your clipboard."
-    });
-  };
-
   const handleSendInvite = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -51,11 +37,16 @@ const PatientInviteDoctor = () => {
           Connect with healthcare professionals to share your ECG data and get remote consultations.
         </p>
 
-        <Tabs defaultValue="email" className="w-full">
+        <Tabs defaultValue="code" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="email">Email Invitation</TabsTrigger>
             <TabsTrigger value="code">Referral Code</TabsTrigger>
+            <TabsTrigger value="email">Email Invitation</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="code" className="space-y-6">
+            <ReferralCodeGenerator />
+            <ActiveReferralCodes />
+          </TabsContent>
           
           <TabsContent value="email">
             <Card>
@@ -100,41 +91,6 @@ const PatientInviteDoctor = () => {
                   </Button>
                 </CardFooter>
               </form>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="code">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Referral Code</CardTitle>
-                <CardDescription>
-                  Share this code with your doctor to connect with you
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-md bg-muted/50">
-                  <code className="font-mono text-lg font-semibold">{referralCode}</code>
-                  <Button variant="ghost" size="icon" onClick={handleCopyCode}>
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  <p className="text-sm">Instructions for your doctor:</p>
-                  <ol className="text-sm text-muted-foreground space-y-2 list-decimal pl-4">
-                    <li>Create an account on HeartSync or log in</li>
-                    <li>Navigate to "Add Patient" in the doctor dashboard</li>
-                    <li>Enter this referral code to connect with you</li>
-                  </ol>
-                </div>
-              </CardContent>
-              <CardFooter className="flex-col space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  This code expires in 7 days for security reasons.
-                </p>
-                <Button variant="outline" className="w-full" onClick={handleCopyCode}>
-                  {copied ? "Copied!" : "Copy Code"}
-                </Button>
-              </CardFooter>
             </Card>
           </TabsContent>
         </Tabs>
