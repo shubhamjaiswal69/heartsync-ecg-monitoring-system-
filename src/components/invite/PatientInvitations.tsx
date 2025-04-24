@@ -1,57 +1,68 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ThumbsUp, ThumbsDown } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
+import { Check, X } from "lucide-react";
 
-type PatientInvite = {
+type Invitation = {
   id: string;
-  patient_id: string;
-  status: string;
   created_at: string;
   patient: {
+    id: string;
     first_name: string | null;
     last_name: string | null;
     email: string;
   };
+  status: string;
 };
 
 export function PatientInvitations() {
-  const [invitations, setInvitations] = useState<PatientInvite[]>([]);
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [responding, setResponding] = useState<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchInvitations();
+  }, []);
 
   const fetchInvitations = async () => {
     try {
       setLoading(true);
-      
-      // Get the current user's ID
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        throw new Error("User not authenticated");
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to view invitations.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      // Get all pending invitations
+      // Get all pending invitations where the current user is the doctor
       const { data, error } = await supabase
         .from('doctor_patient_relationships')
         .select(`
-          id,
-          patient_id,
+          id, 
+          created_at, 
           status,
-          created_at,
-          patient:patient_id(first_name, last_name, email)
+          patient:patient_id(
+            id, 
+            first_name, 
+            last_name,
+            email
+          )
         `)
         .eq('doctor_id', user.id)
-        .eq('status', 'pending');
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      setInvitations(data as unknown as PatientInvite[]);
+      setInvitations(data as unknown as Invitation[]);
     } catch (error) {
       console.error("Error fetching invitations:", error);
       toast({
@@ -64,55 +75,83 @@ export function PatientInvitations() {
     }
   };
 
-  useEffect(() => {
-    fetchInvitations();
-  }, []);
-
-  const handleResponse = async (invitationId: string, accept: boolean) => {
+  const handleAccept = async (invitationId: string, patientName: string) => {
     try {
-      setResponding(invitationId);
-      
       const { error } = await supabase
         .from('doctor_patient_relationships')
-        .update({ status: accept ? 'accepted' : 'rejected' })
+        .update({ status: 'accepted' })
         .eq('id', invitationId);
 
       if (error) throw error;
 
-      // Update local state
+      // Update the local state
       setInvitations(invitations.filter(inv => inv.id !== invitationId));
       
       toast({
-        title: accept ? "Invitation accepted" : "Invitation rejected",
-        description: accept 
-          ? "You are now connected with this patient." 
-          : "You have rejected this invitation.",
+        title: "Invitation Accepted",
+        description: `You are now connected with ${patientName}.`,
       });
     } catch (error) {
-      console.error("Error responding to invitation:", error);
+      console.error("Error accepting invitation:", error);
       toast({
         title: "Error",
-        description: "Failed to respond to invitation.",
+        description: "Failed to accept invitation.",
         variant: "destructive",
       });
-    } finally {
-      setResponding(null);
+    }
+  };
+
+  const handleReject = async (invitationId: string, patientName: string) => {
+    try {
+      const { error } = await supabase
+        .from('doctor_patient_relationships')
+        .update({ status: 'rejected' })
+        .eq('id', invitationId);
+
+      if (error) throw error;
+
+      // Update the local state
+      setInvitations(invitations.filter(inv => inv.id !== invitationId));
+      
+      toast({
+        title: "Invitation Rejected",
+        description: `You have rejected the connection request from ${patientName}.`,
+      });
+    } catch (error) {
+      console.error("Error rejecting invitation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to reject invitation.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getPatientName = (patient: Invitation['patient']) => {
+    if (patient.first_name && patient.last_name) {
+      return `${patient.first_name} ${patient.last_name}`;
+    } else if (patient.first_name) {
+      return patient.first_name;
+    } else {
+      return patient.email;
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Patient Invitations</CardTitle>
+        <CardTitle>Patient Connection Requests</CardTitle>
         <CardDescription>
-          Patients requesting to connect with you
+          Review and manage patient requests to connect with you
         </CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-4 text-muted-foreground">Loading invitations...</div>
+          <div className="text-center py-4">Loading invitations...</div>
         ) : invitations.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">No pending invitations</div>
+          <div className="text-center py-4 text-muted-foreground">
+            You have no pending connection requests
+          </div>
         ) : (
           <Table>
             <TableHeader>
@@ -123,38 +162,31 @@ export function PatientInvitations() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {invitations.map((invite) => (
-                <TableRow key={invite.id}>
+              {invitations.map((invitation) => (
+                <TableRow key={invitation.id}>
                   <TableCell className="font-medium">
-                    {invite.patient.first_name} {invite.patient.last_name}
-                    <div className="text-xs text-muted-foreground">{invite.patient.email}</div>
+                    {getPatientName(invitation.patient)}
                   </TableCell>
                   <TableCell>
-                    {new Date(invite.created_at).toLocaleDateString()}
+                    {new Date(invitation.created_at).toLocaleDateString()}
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleResponse(invite.id, true)}
-                        disabled={responding === invite.id}
-                        className="flex gap-1 items-center"
-                      >
-                        <ThumbsUp size={16} />
-                        Accept
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleResponse(invite.id, false)}
-                        disabled={responding === invite.id}
-                        className="flex gap-1 items-center"
-                      >
-                        <ThumbsDown size={16} />
-                        Reject
-                      </Button>
-                    </div>
+                  <TableCell className="text-right space-x-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-8 p-0"
+                      onClick={() => handleAccept(invitation.id, getPatientName(invitation.patient))}
+                    >
+                      <Check size={16} className="text-green-500" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-8 p-0"
+                      onClick={() => handleReject(invitation.id, getPatientName(invitation.patient))}
+                    >
+                      <X size={16} className="text-red-500" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

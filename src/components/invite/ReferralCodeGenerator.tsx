@@ -33,7 +33,7 @@ export function ReferralCodeGenerator() {
         // Check if doctor already has a referral code
         const { data, error } = await supabase
           .from('profiles')
-          .select('*')
+          .select('referral_code')
           .eq('id', user.id)
           .single();
 
@@ -44,6 +44,9 @@ export function ReferralCodeGenerator() {
 
         if (data && data.referral_code) {
           setReferralCode(data.referral_code);
+        } else {
+          // If no referral code exists, generate one automatically
+          generateNewCode(user.id);
         }
       } catch (error) {
         console.error("Error fetching referral code:", error);
@@ -54,6 +57,37 @@ export function ReferralCodeGenerator() {
 
     fetchDoctorCode();
   }, [toast]);
+
+  const generateNewCode = async (userId: string) => {
+    try {
+      // Generate a random code
+      const code = `DR${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+      // Update the doctor's profile with the new referral code
+      const { error } = await supabase
+        .from('profiles')
+        .update({ referral_code: code })
+        .eq('id', userId);
+
+      if (error) {
+        throw error;
+      }
+
+      setReferralCode(code);
+      
+      toast({
+        title: "Success",
+        description: "New referral code generated successfully.",
+      });
+    } catch (error) {
+      console.error("Error generating code:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate referral code.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleGenerateCode = async () => {
     try {
@@ -71,26 +105,7 @@ export function ReferralCodeGenerator() {
         return;
       }
 
-      // Generate a random code
-      const code = `DR${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-
-      // Update the doctor's profile with the new referral code
-      const { error } = await supabase
-        .from('profiles')
-        .update({ referral_code: code })
-        .eq('id', user.id);
-
-      if (error) {
-        throw error;
-      }
-
-      setReferralCode(code);
-      
-      toast({
-        title: "Success",
-        description: "New referral code generated successfully.",
-      });
-
+      await generateNewCode(user.id);
     } catch (error) {
       console.error("Error generating code:", error);
       toast({
