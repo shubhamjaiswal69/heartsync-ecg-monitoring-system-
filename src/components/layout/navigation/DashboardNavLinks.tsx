@@ -60,6 +60,11 @@ const doctorLinks: NavLink[] = [
     icon: Activity
   },
   { 
+    name: "Manage Invitations", 
+    path: "/doctor/manage-invitations", 
+    icon: UserPlus
+  },
+  { 
     name: "Reports", 
     path: "/doctor/reports", 
     icon: FileText

@@ -1,17 +1,16 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 
-type PendingInvite = {
+type PendingInvitation = {
   id: string;
-  doctor_id: string;
-  status: string;
   created_at: string;
   doctor: {
+    id: string;
     first_name: string | null;
     last_name: string | null;
     email: string;
@@ -19,38 +18,47 @@ type PendingInvite = {
 };
 
 export function PendingInvitations() {
-  const [invitations, setInvitations] = useState<PendingInvite[]>([]);
+  const [invitations, setInvitations] = useState<PendingInvitation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cancelling, setCancelling] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const fetchInvitations = async () => {
+  useEffect(() => {
+    fetchPendingInvitations();
+  }, []);
+
+  const fetchPendingInvitations = async () => {
     try {
       setLoading(true);
-      
-      // Get the current user's ID
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        throw new Error("User not authenticated");
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to view your pending invitations.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      // Get all pending invitations
+      // Get all pending invitations where the current user is the patient
       const { data, error } = await supabase
         .from('doctor_patient_relationships')
         .select(`
           id,
-          doctor_id,
-          status,
           created_at,
-          doctor:doctor_id(first_name, last_name, email)
+          doctor:doctor_id(
+            id,
+            first_name,
+            last_name,
+            email
+          )
         `)
         .eq('patient_id', user.id)
         .eq('status', 'pending');
 
       if (error) throw error;
 
-      setInvitations(data as unknown as PendingInvite[]);
+      setInvitations(data as unknown as PendingInvitation[]);
     } catch (error) {
       console.error("Error fetching pending invitations:", error);
       toast({
@@ -63,14 +71,8 @@ export function PendingInvitations() {
     }
   };
 
-  useEffect(() => {
-    fetchInvitations();
-  }, []);
-
-  const handleCancelInvitation = async (invitationId: string) => {
+  const handleCancel = async (invitationId: string) => {
     try {
-      setCancelling(invitationId);
-      
       const { error } = await supabase
         .from('doctor_patient_relationships')
         .delete()
@@ -78,68 +80,65 @@ export function PendingInvitations() {
 
       if (error) throw error;
 
-      // Update local state
+      // Update the local state
       setInvitations(invitations.filter(inv => inv.id !== invitationId));
       
       toast({
-        title: "Invitation cancelled",
+        title: "Invitation Cancelled",
         description: "Your invitation has been cancelled.",
       });
     } catch (error) {
       console.error("Error cancelling invitation:", error);
       toast({
         title: "Error",
-        description: "Failed to cancel the invitation.",
+        description: "Failed to cancel invitation.",
         variant: "destructive",
       });
-    } finally {
-      setCancelling(null);
+    }
+  };
+
+  const getDoctorName = (doctor: PendingInvitation['doctor']) => {
+    if (doctor.first_name && doctor.last_name) {
+      return `Dr. ${doctor.first_name} ${doctor.last_name}`;
+    } else if (doctor.first_name) {
+      return `Dr. ${doctor.first_name}`;
+    } else {
+      return doctor.email;
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pending Invitations</CardTitle>
+        <CardTitle>Pending Doctor Invitations</CardTitle>
         <CardDescription>
-          Doctor invitations waiting for approval
+          Invitations you've sent that are waiting for acceptance
         </CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="text-center py-4 text-muted-foreground">Loading invitations...</div>
+          <div className="text-center py-4">Loading invitations...</div>
         ) : invitations.length === 0 ? (
-          <div className="text-center py-4 text-muted-foreground">No pending invitations</div>
+          <div className="text-center py-4 text-muted-foreground">
+            You have no pending invitations
+          </div>
         ) : (
           <div className="space-y-4">
-            {invitations.map((invite) => (
-              <div key={invite.id} className="flex items-center justify-between py-2">
-                <div className="flex items-center space-x-4">
-                  <div className="rounded-full bg-primary/10 p-2">
-                    <svg viewBox="0 0 24 24" className="h-4 w-4 text-primary" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      Dr. {invite.doctor.first_name} {invite.doctor.last_name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{invite.doctor.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Sent on {new Date(invite.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
+            {invitations.map((invitation) => (
+              <div key={invitation.id} className="flex items-center justify-between p-3 bg-muted rounded-md">
+                <div>
+                  <p className="font-medium">{getDoctorName(invitation.doctor)}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Invited on {new Date(invitation.created_at).toLocaleDateString()}
+                  </p>
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
                   size="sm"
-                  onClick={() => handleCancelInvitation(invite.id)}
-                  disabled={cancelling === invite.id}
-                  className="flex items-center gap-1"
+                  variant="outline"
+                  className="h-8 w-8 p-0"
+                  onClick={() => handleCancel(invitation.id)}
                 >
-                  <X size={16} />
-                  Cancel
+                  <X size={16} className="text-red-500" />
                 </Button>
               </div>
             ))}

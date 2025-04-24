@@ -1,6 +1,4 @@
 
-import { useState } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { DoctorInviteForm } from "@/components/invite/DoctorInviteForm";
 import { ConnectedDoctors } from "@/components/invite/ConnectedDoctors";
