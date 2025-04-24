@@ -18,6 +18,9 @@ export function ProfileDropdown() {
     ? `${profile.first_name[0]}${profile.last_name[0]}`
     : profile?.email?.[0]?.toUpperCase() || '?';
 
+  // Determine the correct profile path based on user role
+  const profilePath = profile?.role ? `/${profile.role}/profile` : '/profile';
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="outline-none">
@@ -36,7 +39,7 @@ export function ProfileDropdown() {
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link to={`/${profile?.role}/profile`}>
+          <Link to={profilePath}>
             <UserRound className="mr-2 h-4 w-4" />
             Profile Settings
           </Link>
