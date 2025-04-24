@@ -26,11 +26,16 @@ export function ReferralCodeGenerator() {
         }
 
         // Check if doctor already has a referral code
-        const { data: doctorProfile } = await supabase
+        const { data: doctorProfile, error } = await supabase
           .from('profiles')
-          .select('referral_code')
+          .select('*')
           .eq('id', user.id)
-          .maybeSingle();
+          .single();
+
+        if (error) {
+          console.error("Error fetching profile:", error);
+          return;
+        }
 
         if (doctorProfile?.referral_code) {
           setReferralCode(doctorProfile.referral_code);

@@ -35,24 +35,30 @@ export function DoctorInviteForm() {
       }
 
       // Find the doctor with this referral code
-      const { data: doctor, error: doctorError } = await supabase
+      const { data: doctors, error: doctorError } = await supabase
         .from('profiles')
         .select('id, first_name, last_name')
         .eq('referral_code', referralCode.trim())
-        .eq('role', 'doctor')
-        .maybeSingle();
+        .eq('role', 'doctor');
 
-      if (doctorError || !doctor) {
+      if (doctorError || !doctors || doctors.length === 0) {
         throw new Error("Invalid referral code. Please check and try again.");
       }
 
+      const doctor = doctors[0];
+
       // Check if invitation already exists
-      const { data: existingInvite, error: existingError } = await supabase
+      const { data: existingInvites, error: existingError } = await supabase
         .from('doctor_patient_relationships')
         .select('id, status')
         .eq('doctor_id', doctor.id)
-        .eq('patient_id', user.id)
-        .maybeSingle();
+        .eq('patient_id', user.id);
+
+      if (existingError) {
+        throw existingError;
+      }
+
+      const existingInvite = existingInvites && existingInvites.length > 0 ? existingInvites[0] : null;
 
       if (existingInvite) {
         if (existingInvite.status === 'accepted') {
