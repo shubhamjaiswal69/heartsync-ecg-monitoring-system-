@@ -29,13 +29,29 @@ export function ReferralCodeGenerator() {
         return;
       }
 
+      // Get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Generate a unique code using the function we created
+      const { data: codeData, error: codeError } = await supabase
+        .rpc('generate_unique_referral_code');
+
+      if (codeError) throw codeError;
+      
+      const code = codeData || `HEARTSYNC-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+      // Insert the new code with all required fields
       const { data, error } = await supabase
         .from('invite_codes')
-        .insert([
-          { 
-            expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-          }
-        ])
+        .insert({
+          code: code,
+          patient_id: user.id,
+          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
+        })
         .select()
         .single();
 
@@ -47,6 +63,7 @@ export function ReferralCodeGenerator() {
       });
 
     } catch (error) {
+      console.error("Error generating code:", error);
       toast({
         title: "Error",
         description: "Failed to generate referral code.",
