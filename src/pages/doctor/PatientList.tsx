@@ -6,6 +6,7 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { AddPatientDialog } from "@/components/doctor/patients/AddPatientDialog";
 import { SearchBar } from "@/components/doctor/patients/SearchBar";
 import { PatientCard } from "@/components/doctor/patients/PatientCard";
+import { ReferralCodeGenerator } from "@/components/invite/ReferralCodeGenerator";
 
 // Mock patient data
 const patients = [
@@ -100,36 +101,40 @@ const DoctorPatientList = () => {
           </div>
           <AddPatientDialog />
         </div>
-        
-        <div className="flex items-center gap-4">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        </div>
-        
-        <Tabs 
-          defaultValue="all" 
-          className="w-full"
-          onValueChange={(value) => setActiveTab(value as "all" | "active" | "inactive" | "pending")}
-        >
-          <TabsList className="grid grid-cols-4 mb-6">
-            <TabsTrigger value="all">All Patients</TabsTrigger>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="inactive">Inactive</TabsTrigger>
-            <TabsTrigger value="pending">Pending</TabsTrigger>
-          </TabsList>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <ReferralCodeGenerator />
           
-          <TabsContent value="all" className="space-y-4">
-            {renderPatientsList(filteredPatients)}
-          </TabsContent>
-          <TabsContent value="active" className="space-y-4">
-            {renderPatientsList(filteredPatients)}
-          </TabsContent>
-          <TabsContent value="inactive" className="space-y-4">
-            {renderPatientsList(filteredPatients)}
-          </TabsContent>
-          <TabsContent value="pending" className="space-y-4">
-            {renderPatientsList(filteredPatients)}
-          </TabsContent>
-        </Tabs>
+          <div className="space-y-4">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+            
+            <Tabs 
+              defaultValue="all" 
+              className="w-full"
+              onValueChange={(value) => setActiveTab(value as "all" | "active" | "inactive" | "pending")}
+            >
+              <TabsList className="grid grid-cols-4">
+                <TabsTrigger value="all">All Patients</TabsTrigger>
+                <TabsTrigger value="active">Active</TabsTrigger>
+                <TabsTrigger value="inactive">Inactive</TabsTrigger>
+                <TabsTrigger value="pending">Pending</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="all" className="space-y-4">
+                {renderPatientsList(filteredPatients)}
+              </TabsContent>
+              <TabsContent value="active" className="space-y-4">
+                {renderPatientsList(filteredPatients)}
+              </TabsContent>
+              <TabsContent value="inactive" className="space-y-4">
+                {renderPatientsList(filteredPatients)}
+              </TabsContent>
+              <TabsContent value="pending" className="space-y-4">
+                {renderPatientsList(filteredPatients)}
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
     </DashboardLayout>
   );
