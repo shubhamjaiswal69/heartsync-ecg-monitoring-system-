@@ -1,4 +1,3 @@
-
 import { ReactNode, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { ProfileDropdown } from "./ProfileDropdown";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -99,7 +99,6 @@ const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background">
-      {/* Sidebar - Mobile */}
       <div 
         className={cn(
           "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden",
@@ -145,7 +144,6 @@ const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
         </div>
       </div>
 
-      {/* Sidebar - Desktop */}
       <div className="hidden md:block w-64 bg-card border-r md:min-h-screen">
         <div className="p-4 border-b">
           <Link to="/" className="flex items-center gap-2">
@@ -180,7 +178,6 @@ const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
         </nav>
       </div>
 
-      {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         <header className="bg-card border-b p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -191,16 +188,20 @@ const DashboardLayout = ({ children, userType }: DashboardLayoutProps) => {
               {userType === "patient" ? "Patient Portal" : "Doctor Portal"}
             </h1>
           </div>
-          <div className="md:hidden">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-destructive" 
-              onClick={handleLogout}
-              disabled={loading}
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
+
+          <div className="flex items-center gap-4">
+            <ProfileDropdown />
+            <div className="md:hidden">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="text-destructive" 
+                onClick={handleLogout}
+                disabled={loading}
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </header>
         <main className="flex-1 p-4 md:p-6 overflow-auto">
