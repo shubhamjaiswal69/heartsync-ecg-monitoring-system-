@@ -22,11 +22,16 @@ export function ReferralCodeGenerator() {
         const { data: { user } } = await supabase.auth.getUser();
         
         if (!user) {
-          throw new Error("User not authenticated");
+          toast({
+            title: "Authentication Error",
+            description: "You must be logged in to use this feature.",
+            variant: "destructive",
+          });
+          return;
         }
 
         // Check if doctor already has a referral code
-        const { data: doctorProfile, error } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
@@ -37,8 +42,8 @@ export function ReferralCodeGenerator() {
           return;
         }
 
-        if (doctorProfile?.referral_code) {
-          setReferralCode(doctorProfile.referral_code);
+        if (data && data.referral_code) {
+          setReferralCode(data.referral_code);
         }
       } catch (error) {
         console.error("Error fetching referral code:", error);
@@ -48,7 +53,7 @@ export function ReferralCodeGenerator() {
     };
 
     fetchDoctorCode();
-  }, []);
+  }, [toast]);
 
   const handleGenerateCode = async () => {
     try {
@@ -58,7 +63,12 @@ export function ReferralCodeGenerator() {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        throw new Error("User not authenticated");
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to use this feature.",
+          variant: "destructive",
+        });
+        return;
       }
 
       // Generate a random code
@@ -70,7 +80,9 @@ export function ReferralCodeGenerator() {
         .update({ referral_code: code })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       setReferralCode(code);
       

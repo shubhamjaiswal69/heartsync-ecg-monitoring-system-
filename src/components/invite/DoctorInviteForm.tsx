@@ -7,6 +7,17 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
 
+type Doctor = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+}
+
+type Invitation = {
+  id: string;
+  status: string;
+}
+
 export function DoctorInviteForm() {
   const [referralCode, setReferralCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -41,11 +52,15 @@ export function DoctorInviteForm() {
         .eq('referral_code', referralCode.trim())
         .eq('role', 'doctor');
 
-      if (doctorError || !doctors || doctors.length === 0) {
+      if (doctorError) {
+        throw doctorError;
+      }
+
+      if (!doctors || doctors.length === 0) {
         throw new Error("Invalid referral code. Please check and try again.");
       }
 
-      const doctor = doctors[0];
+      const doctor = doctors[0] as Doctor;
 
       // Check if invitation already exists
       const { data: existingInvites, error: existingError } = await supabase
@@ -58,7 +73,9 @@ export function DoctorInviteForm() {
         throw existingError;
       }
 
-      const existingInvite = existingInvites && existingInvites.length > 0 ? existingInvites[0] : null;
+      const existingInvite = existingInvites && existingInvites.length > 0 
+        ? existingInvites[0] as Invitation 
+        : null;
 
       if (existingInvite) {
         if (existingInvite.status === 'accepted') {
