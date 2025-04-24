@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -17,6 +18,7 @@ import DoctorDashboard from "./pages/doctor/Dashboard";
 import DoctorPatientList from "./pages/doctor/PatientList";
 import DoctorECGViewer from "./pages/doctor/ECGViewer";
 import DoctorReports from "./pages/doctor/Reports";
+import DoctorManageInvitations from "./pages/doctor/ManageInvitations";
 import Features from "./pages/Features";
 import About from "./pages/About";
 import ProfilePage from "./pages/profile/ProfilePage";
@@ -51,6 +53,7 @@ const App = () => (
             <Route path="/doctor/patients" element={<DoctorPatientList />} />
             <Route path="/doctor/ecg-viewer/:patientId?" element={<DoctorECGViewer />} />
             <Route path="/doctor/reports" element={<DoctorReports />} />
+            <Route path="/doctor/manage-invitations" element={<DoctorManageInvitations />} />
             
             {/* Catch-all Route */}
             <Route path="*" element={<NotFound />} />

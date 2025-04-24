@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -9,26 +9,46 @@ import { supabase } from "@/integrations/supabase/client";
 export function ReferralCodeGenerator() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Fetch doctor's referral code on component mount
+  useEffect(() => {
+    const fetchDoctorCode = async () => {
+      try {
+        setLoading(true);
+        
+        // Get the current user's ID
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          throw new Error("User not authenticated");
+        }
+
+        // Check if doctor already has a referral code
+        const { data: doctorProfile } = await supabase
+          .from('profiles')
+          .select('referral_code')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (doctorProfile?.referral_code) {
+          setReferralCode(doctorProfile.referral_code);
+        }
+      } catch (error) {
+        console.error("Error fetching referral code:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctorCode();
+  }, []);
 
   const handleGenerateCode = async () => {
     try {
       setLoading(true);
       
-      const { data: existingCodes } = await supabase
-        .from('invite_codes')
-        .select('*')
-        .eq('used', false)
-        .maybeSingle();
-
-      if (existingCodes) {
-        toast({
-          title: "Active code exists",
-          description: "You already have an active referral code.",
-        });
-        return;
-      }
-
       // Get the current user's ID
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -36,22 +56,19 @@ export function ReferralCodeGenerator() {
         throw new Error("User not authenticated");
       }
 
-      // Generate a random code instead of using the stored procedure
-      const code = `HEARTSYNC-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      // Generate a random code
+      const code = `DR${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
-      // Insert the new code with all required fields
-      const { data, error } = await supabase
-        .from('invite_codes')
-        .insert({
-          code: code,
-          patient_id: user.id,
-          expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days from now
-        })
-        .select()
-        .single();
+      // Update the doctor's profile with the new referral code
+      const { error } = await supabase
+        .from('profiles')
+        .update({ referral_code: code })
+        .eq('id', user.id);
 
       if (error) throw error;
 
+      setReferralCode(code);
+      
       toast({
         title: "Success",
         description: "New referral code generated successfully.",
@@ -69,8 +86,10 @@ export function ReferralCodeGenerator() {
     }
   };
 
-  const handleCopyCode = async (code: string) => {
-    await navigator.clipboard.writeText(code);
+  const handleCopyCode = async () => {
+    if (!referralCode) return;
+    
+    await navigator.clipboard.writeText(referralCode);
     setCopied(true);
     toast({
       title: "Copied",
@@ -82,18 +101,36 @@ export function ReferralCodeGenerator() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Generate Referral Code</CardTitle>
+        <CardTitle>Your Referral Code</CardTitle>
         <CardDescription>
-          Create a unique referral code to share with your doctor
+          Share this code with patients to let them connect with you
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        {referralCode ? (
+          <div className="flex items-center justify-between p-3 bg-muted rounded-md">
+            <span className="font-mono font-medium">{referralCode}</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleCopyCode}
+              className="h-8 w-8 p-0"
+            >
+              {copied ? <Check size={16} /> : <Copy size={16} />}
+            </Button>
+          </div>
+        ) : (
+          <div className="text-center text-muted-foreground">
+            No referral code generated yet
+          </div>
+        )}
+        
         <Button 
           onClick={handleGenerateCode} 
           disabled={loading}
           className="w-full"
         >
-          {loading ? "Generating..." : "Generate New Code"}
+          {loading ? "Processing..." : referralCode ? "Generate New Code" : "Generate Code"}
         </Button>
       </CardContent>
     </Card>
