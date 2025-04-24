@@ -36,13 +36,8 @@ export function ReferralCodeGenerator() {
         throw new Error("User not authenticated");
       }
 
-      // Generate a unique code using the function we created
-      const { data: codeData, error: codeError } = await supabase
-        .rpc('generate_unique_referral_code');
-
-      if (codeError) throw codeError;
-      
-      const code = codeData || `HEARTSYNC-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+      // Generate a random code instead of using the stored procedure
+      const code = `HEARTSYNC-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
 
       // Insert the new code with all required fields
       const { data, error } = await supabase
