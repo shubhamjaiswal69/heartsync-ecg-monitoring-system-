@@ -5,19 +5,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 import Layout from "@/components/layout/Layout";
+import { useAuth } from "@/context/AuthContext";
 
 const Login = () => {
   const [userType, setUserType] = useState<"patient" | "doctor">("patient");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { signIn } = useAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would verify credentials with Supabase
-    // For now, just redirect to the appropriate dashboard
-    navigate(`/${userType}/dashboard`);
+    setLoading(true);
+
+    try {
+      await signIn(email, password);
+      navigate(`/${userType}/dashboard`);
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error signing in",
+        description: error.message || "Please check your credentials and try again"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,6 +62,7 @@ const Login = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
@@ -56,9 +73,12 @@ const Login = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
-                  <Button type="submit" className="w-full">Login as Patient</Button>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Signing in..." : "Login as Patient"}
+                  </Button>
                 </form>
               </TabsContent>
               <TabsContent value="doctor">
@@ -71,6 +91,7 @@ const Login = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
@@ -81,9 +102,12 @@ const Login = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
-                  <Button type="submit" className="w-full">Login as Doctor</Button>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Signing in..." : "Login as Doctor"}
+                  </Button>
                 </form>
               </TabsContent>
             </Tabs>

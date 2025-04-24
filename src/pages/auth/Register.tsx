@@ -5,21 +5,52 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/components/ui/use-toast";
 import Layout from "@/components/layout/Layout";
+import { useAuth } from "@/context/AuthContext";
 
 const Register = () => {
   const [userType, setUserType] = useState<"patient" | "doctor">("patient");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const { signUp } = useAuth();
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would register user with Supabase
-    // For now, just redirect to the appropriate dashboard
-    navigate(`/${userType}/dashboard`);
+    
+    if (password !== confirmPassword) {
+      toast({
+        variant: "destructive",
+        title: "Password mismatch",
+        description: "The passwords you entered don't match"
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await signUp(email, password, userType, firstName, lastName);
+      toast({
+        title: "Registration successful!",
+        description: "Please check your email to verify your account"
+      });
+      navigate("/login");
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Error registering",
+        description: error.message || "An error occurred during registration"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -42,98 +73,118 @@ const Register = () => {
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
                     <Input
-                      id="name"
-                      placeholder="Full Name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      placeholder="First Name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
                     <Input
-                      id="email"
-                      placeholder="Email"
+                      placeholder="Last Name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Input
                       type="email"
+                      placeholder="Email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
                     <Input
-                      id="password"
-                      placeholder="Password"
                       type="password"
+                      placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
                     <Input
-                      id="confirm-password"
-                      placeholder="Confirm Password"
                       type="password"
+                      placeholder="Confirm Password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
-                  <Button type="submit" className="w-full">Register as Patient</Button>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Creating account..." : "Register as Patient"}
+                  </Button>
                 </form>
               </TabsContent>
               <TabsContent value="doctor">
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
                     <Input
-                      id="doctor-name"
-                      placeholder="Full Name"
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      placeholder="First Name"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
                     <Input
-                      id="doctor-email"
-                      placeholder="Email"
+                      placeholder="Last Name"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Input
                       type="email"
+                      placeholder="Email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
                     <Input
-                      id="doctor-password"
-                      placeholder="Password"
                       type="password"
+                      placeholder="Password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
                     <Input
-                      id="doctor-confirm-password"
-                      placeholder="Confirm Password"
                       type="password"
+                      placeholder="Confirm Password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required
+                      disabled={loading}
                     />
                   </div>
                   <div className="space-y-2">
                     <Input
-                      id="license"
                       placeholder="Medical License Number"
                       type="text"
                       required
+                      disabled={loading}
                     />
                   </div>
-                  <Button type="submit" className="w-full">Register as Doctor</Button>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Creating account..." : "Register as Doctor"}
+                  </Button>
                 </form>
               </TabsContent>
             </Tabs>
