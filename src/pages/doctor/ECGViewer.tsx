@@ -11,6 +11,7 @@ import { HistoryTab } from "@/components/ecg/HistoryTab";
 import { ViewerContent } from "@/components/ecg/ViewerContent";
 import { useECGData } from "@/hooks/useECGData";
 import { patients } from "@/data/mockEcgData";
+import { HeartRateCard } from "@/components/ecg/HeartRateCard";
 
 const DoctorECGViewer = () => {
   const { patientId } = useParams();
