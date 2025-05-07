@@ -1,10 +1,7 @@
-
 import Layout from "@/components/layout/Layout";
 import { Card, CardContent } from "@/components/ui/card";
-
 const About = () => {
-  return (
-    <Layout>
+  return <Layout>
       <div className="container py-16 md:py-20 space-y-12">
         <div className="text-center space-y-4 max-w-3xl mx-auto">
           <h1 className="text-4xl md:text-5xl font-bold">About HeartSync</h1>
@@ -17,12 +14,7 @@ const About = () => {
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="space-y-4">
               <h2 className="text-3xl font-bold">Our Story</h2>
-              <p className="text-lg text-muted-foreground">
-                HeartSync was founded in 2023 with a simple but powerful mission: make professional-grade 
-                ECG monitoring accessible to everyone, everywhere. Our journey began when our founder's 
-                father suffered from an undetected heart condition that could have been prevented with 
-                regular monitoring.
-              </p>
+              <p className="text-lg text-muted-foreground">HeartSync was founded in 2024 with a simple but powerful mission: make professional-grade ECG monitoring accessible to everyone, everywhere.</p>
               <p className="text-lg text-muted-foreground">
                 What started as a personal project quickly grew into a comprehensive platform that 
                 connects patients with healthcare professionals, providing real-time heart monitoring 
@@ -30,7 +22,7 @@ const About = () => {
               </p>
             </div>
             <div className="rounded-lg bg-primary/10 aspect-square flex items-center justify-center">
-              <span className="text-7xl">❤️</span>
+              <span className="text-9xl">❤️</span>
             </div>
           </div>
 
@@ -55,7 +47,7 @@ const About = () => {
                     <span className="text-3xl">👨‍⚕️</span>
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold">Dr. James Wilson</h3>
+                    <h3 className="text-xl font-bold">Shubham Jaiswal</h3>
                     <p className="text-muted-foreground">Founder & CEO</p>
                   </div>
                   <p className="text-sm text-muted-foreground">
@@ -138,8 +130,6 @@ const About = () => {
           </div>
         </div>
       </div>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default About;
