@@ -1,12 +1,9 @@
-
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { CheckCircle } from "lucide-react";
-
 const Index = () => {
-  return (
-    <Layout>
+  return <Layout>
       {/* Hero Section */}
       <section className="py-20 md:py-28 bg-gradient-to-b from-primary/10 to-background">
         <div className="container">
@@ -29,7 +26,7 @@ const Index = () => {
               </div>
             </div>
             <div className="flex-1 flex justify-center">
-              <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-lg border">
+              <div className="w-full max-w-md bg-card p-6 shadow-lg border rounded-lg">
                 <div className="aspect-video bg-primary/20 rounded-md flex items-center justify-center">
                   <span className="text-5xl">❤️</span>
                 </div>
@@ -56,51 +53,28 @@ const Index = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                title: "For Patients",
-                description: "Connect your ECG device, monitor your heart in real-time, and share results with your doctor securely.",
-                features: [
-                  "Easy device pairing",
-                  "Real-time monitoring",
-                  "Secure data storage",
-                  "Doctor invitation system"
-                ]
-              },
-              {
-                title: "For Doctors",
-                description: "Access patient ECG data in real-time, analyze results, and generate detailed reports.",
-                features: [
-                  "Patient management",
-                  "Live ECG viewing",
-                  "Historical data access",
-                  "Report generation"
-                ]
-              },
-              {
-                title: "Technical Details",
-                description: "Built with security and reliability in mind, HeartSync ensures your health data is protected.",
-                features: [
-                  "End-to-end encryption",
-                  "HIPAA compliant",
-                  "High-availability systems",
-                  "Regular backups"
-                ]
-              }
-            ].map((item, index) => (
-              <div key={index} className="bg-card rounded-lg border p-6 shadow-sm">
+            {[{
+            title: "For Patients",
+            description: "Connect your ECG device, monitor your heart in real-time, and share results with your doctor securely.",
+            features: ["Easy device pairing", "Real-time monitoring", "Secure data storage", "Doctor invitation system"]
+          }, {
+            title: "For Doctors",
+            description: "Access patient ECG data in real-time, analyze results, and generate detailed reports.",
+            features: ["Patient management", "Live ECG viewing", "Historical data access", "Report generation"]
+          }, {
+            title: "Technical Details",
+            description: "Built with security and reliability in mind, HeartSync ensures your health data is protected.",
+            features: ["End-to-end encryption", "HIPAA compliant", "High-availability systems", "Regular backups"]
+          }].map((item, index) => <div key={index} className="bg-card rounded-lg border p-6 shadow-sm">
                 <h3 className="text-xl font-semibold mb-3">{item.title}</h3>
                 <p className="text-muted-foreground mb-4">{item.description}</p>
                 <ul className="space-y-2">
-                  {item.features.map((feature, i) => (
-                    <li key={i} className="flex items-center gap-2">
+                  {item.features.map((feature, i) => <li key={i} className="flex items-center gap-2">
                       <CheckCircle className="h-5 w-5 text-primary" />
                       <span>{feature}</span>
-                    </li>
-                  ))}
+                    </li>)}
                 </ul>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
       </section>
@@ -123,8 +97,6 @@ const Index = () => {
           </div>
         </div>
       </section>
-    </Layout>
-  );
+    </Layout>;
 };
-
 export default Index;
