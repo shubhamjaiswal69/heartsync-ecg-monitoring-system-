@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/components/ui/use-toast";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [userType, setUserType] = useState<"patient" | "doctor">("patient");
@@ -24,6 +24,34 @@ const Login = () => {
 
     try {
       await signIn(email, password);
+      
+      // The profile will be fetched as part of the signIn process in AuthContext
+      // We can now check the user's role and make sure they're accessing the correct portal
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Authentication failed. Please try again.");
+      }
+      
+      // Get the user's profile to check their role
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (profileError) {
+        throw new Error("Error fetching user profile");
+      }
+      
+      const userRole = profileData.role;
+      
+      // Check if the user is trying to access the correct portal
+      if (userRole !== userType) {
+        throw new Error(`This account is registered as a ${userRole}. Please use the ${userRole} portal to log in.`);
+      }
+      
+      // If we made it here, the user is accessing the correct portal
       navigate(`/${userType}/dashboard`);
     } catch (error: any) {
       toast({
