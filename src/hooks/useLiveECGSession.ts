@@ -39,7 +39,10 @@ export function useLiveECGSession(patientId: string | undefined) {
           .order("started_at", { ascending: false })
           .limit(1);
 
-        if (fetchError) throw fetchError;
+        if (fetchError) {
+          console.error("Error fetching active ECG sessions:", fetchError);
+          throw fetchError;
+        }
 
         if (data && data.length > 0) {
           setSession(data[0] as LiveECGSession);
@@ -49,6 +52,7 @@ export function useLiveECGSession(patientId: string | undefined) {
       } catch (err: any) {
         console.error("Error fetching active ECG sessions:", err);
         setError(err.message);
+        // Don't show toast for this error as it's not critical
       } finally {
         setLoading(false);
       }

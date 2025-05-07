@@ -16,7 +16,7 @@ export type Database = {
           id: string
           invitation_date: string | null
           patient_id: string
-          referral_code: string | null
+          referral_code: string
           status: string
         }
         Insert: {
@@ -25,7 +25,7 @@ export type Database = {
           id?: string
           invitation_date?: string | null
           patient_id: string
-          referral_code?: string | null
+          referral_code: string
           status?: string
         }
         Update: {
@@ -34,7 +34,7 @@ export type Database = {
           id?: string
           invitation_date?: string | null
           patient_id?: string
-          referral_code?: string | null
+          referral_code?: string
           status?: string
         }
         Relationships: [

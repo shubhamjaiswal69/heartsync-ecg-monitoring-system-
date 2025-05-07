@@ -40,20 +40,31 @@ export function usePatientProfile(patientId: string | undefined) {
           .from("profiles")
           .select("email, first_name, last_name")
           .eq("id", patientId)
-          .single();
+          .maybeSingle(); // Changed from single() to maybeSingle() to handle case where profile doesn't exist
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          throw profileError;
+        }
 
         // Then get detailed patient profile
         const { data: patientProfileData, error: patientProfileError } = await supabase
           .from("patient_profiles")
           .select("*")
           .eq("id", patientId)
-          .single();
+          .maybeSingle(); // Changed from single() to maybeSingle()
 
         if (patientProfileError && patientProfileError.code !== "PGRST116") {
           // PGRST116 means no rows returned, which is OK (might be a new user)
+          console.error("Error fetching patient profile:", patientProfileError);
           throw patientProfileError;
+        }
+
+        if (!profileData && !patientProfileData) {
+          // If neither profile exists, we need to handle this case
+          console.warn("No profile data found for patient ID:", patientId);
+          setProfile(null);
+          return;
         }
 
         // Combine the data
