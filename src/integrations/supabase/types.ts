@@ -14,6 +14,7 @@ export type Database = {
           created_at: string
           doctor_id: string
           id: string
+          invitation_date: string | null
           patient_id: string
           referral_code: string | null
           status: string
@@ -22,6 +23,7 @@ export type Database = {
           created_at?: string
           doctor_id: string
           id?: string
+          invitation_date?: string | null
           patient_id: string
           referral_code?: string | null
           status?: string
@@ -30,6 +32,7 @@ export type Database = {
           created_at?: string
           doctor_id?: string
           id?: string
+          invitation_date?: string | null
           patient_id?: string
           referral_code?: string | null
           status?: string
@@ -229,7 +232,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_doctor_by_referral_code: {
+        Args: { code: string }
+        Returns: string
+      }
+      is_connected_to_doctor: {
+        Args: { doctor_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       user_role: "patient" | "doctor"

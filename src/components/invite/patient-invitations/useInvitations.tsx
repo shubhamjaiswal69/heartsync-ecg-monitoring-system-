@@ -26,6 +26,7 @@ export function useInvitations() {
       console.log("Fetching invitations for doctor:", user.id);
 
       // Get all pending invitations where the current user is the doctor
+      // The RLS policy "Doctors can view invitations to them" will ensure only relevant data is returned
       const { data, error } = await supabase
         .from('doctor_patient_relationships')
         .select(`
@@ -70,6 +71,7 @@ export function useInvitations() {
     try {
       console.log("Accepting invitation:", invitationId);
       
+      // This is protected by the RLS policy "Doctors can update connection status"
       const { error } = await supabase
         .from('doctor_patient_relationships')
         .update({ status: 'accepted' })
@@ -101,6 +103,7 @@ export function useInvitations() {
     try {
       console.log("Rejecting invitation:", invitationId);
       
+      // This is protected by the RLS policy "Doctors can update connection status"
       const { error } = await supabase
         .from('doctor_patient_relationships')
         .update({ status: 'rejected' })

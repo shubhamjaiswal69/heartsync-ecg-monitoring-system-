@@ -41,6 +41,7 @@ export function PendingInvitations() {
       }
 
       // Get all pending invitations where the current user is the patient
+      // Protected by the RLS policy "Patients can view invitations they sent"
       const { data, error } = await supabase
         .from('doctor_patient_relationships')
         .select(`
@@ -73,6 +74,7 @@ export function PendingInvitations() {
 
   const handleCancel = async (invitationId: string) => {
     try {
+      // This is protected by the RLS policy "Patients can delete pending invitations"
       const { error } = await supabase
         .from('doctor_patient_relationships')
         .delete()
