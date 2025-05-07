@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 export function ReferralCodeGenerator() {
@@ -14,54 +14,60 @@ export function ReferralCodeGenerator() {
 
   // Fetch doctor's referral code on component mount
   useEffect(() => {
-    const fetchDoctorCode = async () => {
-      try {
-        setLoading(true);
-        
-        // Get the current user's ID
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user) {
-          toast({
-            title: "Authentication Error",
-            description: "You must be logged in to use this feature.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Check if doctor already has a referral code
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('referral_code')
-          .eq('id', user.id)
-          .single();
-
-        if (error) {
-          console.error("Error fetching profile:", error);
-          return;
-        }
-
-        if (data && data.referral_code) {
-          setReferralCode(data.referral_code);
-        } else {
-          // If no referral code exists, generate one automatically
-          generateNewCode(user.id);
-        }
-      } catch (error) {
-        console.error("Error fetching referral code:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchDoctorCode();
-  }, [toast]);
+  }, []);
+
+  const fetchDoctorCode = async () => {
+    try {
+      setLoading(true);
+      
+      // Get the current user's ID
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to use this feature.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log("Fetching code for user:", user.id);
+
+      // Check if doctor already has a referral code
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('referral_code')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return;
+      }
+
+      console.log("Profile data:", data);
+
+      if (data && data.referral_code) {
+        setReferralCode(data.referral_code);
+      } else {
+        // If no referral code exists, generate one automatically
+        await generateNewCode(user.id);
+      }
+    } catch (error) {
+      console.error("Error fetching referral code:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const generateNewCode = async (userId: string) => {
     try {
-      // Generate a random code with a consistent format
+      // Generate a more reliable random code with DR prefix
       const code = `DR${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      
+      console.log("Generated new code:", code);
 
       // Update the doctor's profile with the new referral code
       const { error } = await supabase
@@ -70,6 +76,7 @@ export function ReferralCodeGenerator() {
         .eq('id', userId);
 
       if (error) {
+        console.error("Error updating profile with new code:", error);
         throw error;
       }
 
@@ -130,13 +137,27 @@ export function ReferralCodeGenerator() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleRefresh = () => {
+    fetchDoctorCode();
+  };
+
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Your Referral Code</CardTitle>
-        <CardDescription>
-          Share this code with patients to let them connect with you
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Your Referral Code</CardTitle>
+          <CardDescription>
+            Share this code with patients to let them connect with you
+          </CardDescription>
+        </div>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={handleRefresh} 
+          disabled={loading}
+        >
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+        </Button>
       </CardHeader>
       <CardContent className="space-y-4">
         {referralCode ? (
@@ -153,7 +174,7 @@ export function ReferralCodeGenerator() {
           </div>
         ) : (
           <div className="text-center text-muted-foreground">
-            No referral code generated yet
+            {loading ? "Loading..." : "No referral code generated yet"}
           </div>
         )}
         

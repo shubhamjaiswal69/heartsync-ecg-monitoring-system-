@@ -42,6 +42,8 @@ export function PatientInvitations() {
         return;
       }
 
+      console.log("Fetching invitations for doctor:", user.id);
+
       // Get all pending invitations where the current user is the doctor
       const { data, error } = await supabase
         .from('doctor_patient_relationships')
@@ -81,12 +83,17 @@ export function PatientInvitations() {
 
   const handleAccept = async (invitationId: string, patientName: string) => {
     try {
+      console.log("Accepting invitation:", invitationId);
+      
       const { error } = await supabase
         .from('doctor_patient_relationships')
         .update({ status: 'accepted' })
         .eq('id', invitationId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error accepting invitation:", error);
+        throw error;
+      }
 
       // Update the local state
       setInvitations(invitations.filter(inv => inv.id !== invitationId));
@@ -107,12 +114,17 @@ export function PatientInvitations() {
 
   const handleReject = async (invitationId: string, patientName: string) => {
     try {
+      console.log("Rejecting invitation:", invitationId);
+      
       const { error } = await supabase
         .from('doctor_patient_relationships')
         .update({ status: 'rejected' })
         .eq('id', invitationId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error rejecting invitation:", error);
+        throw error;
+      }
 
       // Update the local state
       setInvitations(invitations.filter(inv => inv.id !== invitationId));

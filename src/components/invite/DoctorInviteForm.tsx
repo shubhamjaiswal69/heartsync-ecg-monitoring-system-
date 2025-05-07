@@ -45,13 +45,14 @@ export function DoctorInviteForm() {
         throw new Error("User not authenticated");
       }
 
-      console.log("Looking for doctor with referral code:", referralCode.trim());
+      const trimmedCode = referralCode.trim();
+      console.log("Looking for doctor with referral code:", trimmedCode);
 
       // Find the doctor with this referral code
       const { data: doctors, error: doctorError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name')
-        .eq('referral_code', referralCode.trim())
+        .select('id, first_name, last_name, role')
+        .eq('referral_code', trimmedCode)
         .eq('role', 'doctor');
 
       if (doctorError) {
@@ -91,14 +92,14 @@ export function DoctorInviteForm() {
         if (existingInvite.status === 'accepted') {
           toast({
             title: "Already connected",
-            description: `You are already connected with Dr. ${doctor.first_name} ${doctor.last_name}.`,
+            description: `You are already connected with Dr. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim(),
           });
           setReferralCode("");
           return;
         } else if (existingInvite.status === 'pending') {
           toast({
             title: "Invitation pending",
-            description: `You already have a pending invitation to Dr. ${doctor.first_name} ${doctor.last_name}.`,
+            description: `You already have a pending invitation to Dr. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim(),
           });
           setReferralCode("");
           return;
@@ -113,7 +114,7 @@ export function DoctorInviteForm() {
           doctor_id: doctor.id,
           patient_id: user.id,
           status: 'pending',
-          referral_code: referralCode.trim()
+          referral_code: trimmedCode
         });
 
       if (inviteError) {
@@ -123,7 +124,7 @@ export function DoctorInviteForm() {
 
       toast({
         title: "Invitation sent",
-        description: `Your invitation has been sent to Dr. ${doctor.first_name} ${doctor.last_name}.`,
+        description: `Your invitation has been sent to Dr. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim(),
       });
       
       setReferralCode("");

@@ -4,7 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { patients } from "@/data/mockEcgData";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,19 +16,30 @@ interface PatientSelectorProps {
 
 export function PatientSelector({ selectedPatient, onPatientChange }: PatientSelectorProps) {
   const [copied, setCopied] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const { toast } = useToast();
 
   // Fetch doctor's referral code
   useEffect(() => {
-    const fetchReferralCode = async () => {
+    fetchReferralCode();
+  }, []);
+
+  const fetchReferralCode = async () => {
+    try {
+      setLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user) return;
+      if (!user) {
+        console.error("User not authenticated");
+        return;
+      }
+
+      console.log("Fetching referral code for user:", user.id);
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('referral_code')
+        .select('referral_code, role')
         .eq('id', user.id)
         .single();
 
@@ -37,21 +48,30 @@ export function PatientSelector({ selectedPatient, onPatientChange }: PatientSel
         return;
       }
 
-      if (data && data.referral_code) {
-        setReferralCode(data.referral_code);
-      } else {
-        // If no referral code exists, generate one automatically
-        generateNewCode(user.id);
-      }
-    };
+      console.log("Profile data:", data);
 
-    fetchReferralCode();
-  }, []);
+      // Only proceed if this is a doctor user
+      if (data && data.role === 'doctor') {
+        if (data.referral_code) {
+          setReferralCode(data.referral_code);
+        } else {
+          // If no referral code exists, generate one automatically
+          generateNewCode(user.id);
+        }
+      }
+    } catch (error) {
+      console.error("Error in fetchReferralCode:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const generateNewCode = async (userId: string) => {
     try {
-      // Generate a random code
+      // Generate a random code with a consistent format
       const code = `DR${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      
+      console.log("Generated new code:", code);
 
       // Update the doctor's profile with the new referral code
       const { error } = await supabase
@@ -82,6 +102,10 @@ export function PatientSelector({ selectedPatient, onPatientChange }: PatientSel
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleRefresh = () => {
+    fetchReferralCode();
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -102,11 +126,21 @@ export function PatientSelector({ selectedPatient, onPatientChange }: PatientSel
       
       {referralCode && (
         <Card className="mt-4">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">Your Referral Code</CardTitle>
-            <CardDescription className="text-xs">
-              Share this code with patients to connect
-            </CardDescription>
+          <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Your Referral Code</CardTitle>
+              <CardDescription className="text-xs">
+                Share this code with patients to connect
+              </CardDescription>
+            </div>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={handleRefresh} 
+              className="h-6 w-6 p-0"
+            >
+              <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between p-2 bg-muted rounded-md">
