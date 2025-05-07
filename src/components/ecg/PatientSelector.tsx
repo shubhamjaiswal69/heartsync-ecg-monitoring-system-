@@ -32,13 +32,43 @@ export function PatientSelector({ selectedPatient, onPatientChange }: PatientSel
         .eq('id', user.id)
         .single();
 
+      if (error) {
+        console.error("Error fetching referral code:", error);
+        return;
+      }
+
       if (data && data.referral_code) {
         setReferralCode(data.referral_code);
+      } else {
+        // If no referral code exists, generate one automatically
+        generateNewCode(user.id);
       }
     };
 
     fetchReferralCode();
   }, []);
+
+  const generateNewCode = async (userId: string) => {
+    try {
+      // Generate a random code
+      const code = `DR${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+      // Update the doctor's profile with the new referral code
+      const { error } = await supabase
+        .from('profiles')
+        .update({ referral_code: code })
+        .eq('id', userId);
+
+      if (error) {
+        console.error("Error updating referral code:", error);
+        return;
+      }
+
+      setReferralCode(code);
+    } catch (error) {
+      console.error("Error generating code:", error);
+    }
+  };
 
   const handleCopyCode = async () => {
     if (!referralCode) return;

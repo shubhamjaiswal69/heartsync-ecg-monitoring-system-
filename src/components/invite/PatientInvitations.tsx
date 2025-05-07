@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
-import { Check, X } from "lucide-react";
+import { Check, X, RefreshCw } from "lucide-react";
 
 type Invitation = {
   id: string;
@@ -60,8 +60,12 @@ export function PatientInvitations() {
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching invitations:", error);
+        throw error;
+      }
 
+      console.log("Fetched invitations:", data);
       setInvitations(data as unknown as Invitation[]);
     } catch (error) {
       console.error("Error fetching invitations:", error);
@@ -127,6 +131,10 @@ export function PatientInvitations() {
     }
   };
 
+  const handleRefresh = () => {
+    fetchInvitations();
+  };
+
   const getPatientName = (patient: Invitation['patient']) => {
     if (patient.first_name && patient.last_name) {
       return `${patient.first_name} ${patient.last_name}`;
@@ -139,11 +147,21 @@ export function PatientInvitations() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Patient Connection Requests</CardTitle>
-        <CardDescription>
-          Review and manage patient requests to connect with you
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Patient Connection Requests</CardTitle>
+          <CardDescription>
+            Review and manage patient requests to connect with you
+          </CardDescription>
+        </div>
+        <Button 
+          variant="outline" 
+          size="icon" 
+          onClick={handleRefresh} 
+          disabled={loading}
+        >
+          <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+        </Button>
       </CardHeader>
       <CardContent>
         {loading ? (

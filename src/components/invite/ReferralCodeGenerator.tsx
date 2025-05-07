@@ -60,7 +60,7 @@ export function ReferralCodeGenerator() {
 
   const generateNewCode = async (userId: string) => {
     try {
-      // Generate a random code
+      // Generate a random code with a consistent format
       const code = `DR${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
       // Update the doctor's profile with the new referral code

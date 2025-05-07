@@ -45,6 +45,8 @@ export function DoctorInviteForm() {
         throw new Error("User not authenticated");
       }
 
+      console.log("Looking for doctor with referral code:", referralCode.trim());
+
       // Find the doctor with this referral code
       const { data: doctors, error: doctorError } = await supabase
         .from('profiles')
@@ -53,8 +55,11 @@ export function DoctorInviteForm() {
         .eq('role', 'doctor');
 
       if (doctorError) {
+        console.error("Error finding doctor:", doctorError);
         throw doctorError;
       }
+
+      console.log("Found doctors:", doctors);
 
       if (!doctors || doctors.length === 0) {
         setError("Invalid referral code. Please check and try again.");
@@ -62,6 +67,7 @@ export function DoctorInviteForm() {
       }
 
       const doctor = doctors[0] as Doctor;
+      console.log("Selected doctor:", doctor);
 
       // Check if invitation already exists
       const { data: existingInvites, error: existingError } = await supabase
@@ -71,8 +77,11 @@ export function DoctorInviteForm() {
         .eq('patient_id', user.id);
 
       if (existingError) {
+        console.error("Error checking existing invites:", existingError);
         throw existingError;
       }
+
+      console.log("Existing invites:", existingInvites);
 
       const existingInvite = existingInvites && existingInvites.length > 0 
         ? existingInvites[0] as Invitation 
@@ -108,6 +117,7 @@ export function DoctorInviteForm() {
         });
 
       if (inviteError) {
+        console.error("Error creating invitation:", inviteError);
         throw inviteError;
       }
 
