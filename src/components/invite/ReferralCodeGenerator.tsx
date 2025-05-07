@@ -38,7 +38,7 @@ export function ReferralCodeGenerator() {
       // Check if doctor already has a referral code
       const { data, error } = await supabase
         .from('profiles')
-        .select('referral_code')
+        .select('referral_code, role')
         .eq('id', user.id)
         .single();
 
@@ -49,11 +49,15 @@ export function ReferralCodeGenerator() {
 
       console.log("Profile data:", data);
 
-      if (data && data.referral_code) {
-        setReferralCode(data.referral_code);
+      if (data && data.role === 'doctor') {
+        if (data.referral_code) {
+          setReferralCode(data.referral_code);
+        } else {
+          // If no referral code exists, generate one automatically
+          await generateNewCode(user.id);
+        }
       } else {
-        // If no referral code exists, generate one automatically
-        await generateNewCode(user.id);
+        console.log("User is not a doctor or no role assigned");
       }
     } catch (error) {
       console.error("Error fetching referral code:", error);

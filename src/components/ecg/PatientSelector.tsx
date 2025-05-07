@@ -56,7 +56,7 @@ export function PatientSelector({ selectedPatient, onPatientChange }: PatientSel
           setReferralCode(data.referral_code);
         } else {
           // If no referral code exists, generate one automatically
-          generateNewCode(user.id);
+          await generateNewCode(user.id);
         }
       }
     } catch (error) {
@@ -68,7 +68,7 @@ export function PatientSelector({ selectedPatient, onPatientChange }: PatientSel
 
   const generateNewCode = async (userId: string) => {
     try {
-      // Generate a random code with a consistent format
+      // Generate a random code with a consistent format - always prefix with DR and use uppercase
       const code = `DR${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
       
       console.log("Generated new code:", code);
@@ -81,12 +81,26 @@ export function PatientSelector({ selectedPatient, onPatientChange }: PatientSel
 
       if (error) {
         console.error("Error updating referral code:", error);
+        toast({
+          title: "Error",
+          description: "Failed to generate referral code.",
+          variant: "destructive",
+        });
         return;
       }
 
       setReferralCode(code);
+      toast({
+        title: "Success",
+        description: "New referral code generated.",
+      });
     } catch (error) {
       console.error("Error generating code:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate referral code.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -102,8 +116,11 @@ export function PatientSelector({ selectedPatient, onPatientChange }: PatientSel
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleRefresh = () => {
-    fetchReferralCode();
+  const handleRefresh = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await generateNewCode(user.id);
+    }
   };
 
   return (

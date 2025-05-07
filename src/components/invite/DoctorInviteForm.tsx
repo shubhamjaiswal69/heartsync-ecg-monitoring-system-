@@ -13,6 +13,7 @@ type Doctor = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  email: string;
 }
 
 type Invitation = {
@@ -45,13 +46,13 @@ export function DoctorInviteForm() {
         throw new Error("User not authenticated");
       }
 
-      const trimmedCode = referralCode.trim();
+      const trimmedCode = referralCode.trim().toUpperCase(); // Normalize the code
       console.log("Looking for doctor with referral code:", trimmedCode);
 
       // Find the doctor with this referral code
       const { data: doctors, error: doctorError } = await supabase
         .from('profiles')
-        .select('id, first_name, last_name, role')
+        .select('id, first_name, last_name, role, email')
         .eq('referral_code', trimmedCode)
         .eq('role', 'doctor');
 
@@ -69,6 +70,12 @@ export function DoctorInviteForm() {
 
       const doctor = doctors[0] as Doctor;
       console.log("Selected doctor:", doctor);
+      
+      // Don't allow connecting to yourself
+      if (doctor.id === user.id) {
+        setError("You cannot connect with yourself.");
+        return;
+      }
 
       // Check if invitation already exists
       const { data: existingInvites, error: existingError } = await supabase
@@ -90,16 +97,18 @@ export function DoctorInviteForm() {
 
       if (existingInvite) {
         if (existingInvite.status === 'accepted') {
+          const doctorName = (doctor.first_name || '') + ' ' + (doctor.last_name || '');
           toast({
             title: "Already connected",
-            description: `You are already connected with Dr. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim(),
+            description: `You are already connected with Dr. ${doctorName.trim() || doctor.email}`,
           });
           setReferralCode("");
           return;
         } else if (existingInvite.status === 'pending') {
+          const doctorName = (doctor.first_name || '') + ' ' + (doctor.last_name || '');
           toast({
             title: "Invitation pending",
-            description: `You already have a pending invitation to Dr. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim(),
+            description: `You already have a pending invitation to Dr. ${doctorName.trim() || doctor.email}`,
           });
           setReferralCode("");
           return;
@@ -122,9 +131,10 @@ export function DoctorInviteForm() {
         throw inviteError;
       }
 
+      const doctorName = (doctor.first_name || '') + ' ' + (doctor.last_name || '');
       toast({
         title: "Invitation sent",
-        description: `Your invitation has been sent to Dr. ${doctor.first_name || ''} ${doctor.last_name || ''}`.trim(),
+        description: `Your invitation has been sent to Dr. ${doctorName.trim() || doctor.email}`,
       });
       
       setReferralCode("");
@@ -161,7 +171,7 @@ export function DoctorInviteForm() {
               placeholder="Enter code (e.g. DR1A2B)"
               value={referralCode}
               onChange={(e) => {
-                setReferralCode(e.target.value);
+                setReferralCode(e.target.value.toUpperCase()); // Convert to uppercase while typing
                 setError(null);
               }}
               className="font-mono"
