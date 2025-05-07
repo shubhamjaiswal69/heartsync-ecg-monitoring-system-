@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { XCircle } from "lucide-react";
 
 type Doctor = {
   id: string;
@@ -21,17 +23,15 @@ type Invitation = {
 export function DoctorInviteForm() {
   const [referralCode, setReferralCode] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (!referralCode.trim()) {
-      toast({
-        title: "Error",
-        description: "Please enter a referral code.",
-        variant: "destructive",
-      });
+      setError("Please enter a referral code.");
       return;
     }
 
@@ -57,7 +57,8 @@ export function DoctorInviteForm() {
       }
 
       if (!doctors || doctors.length === 0) {
-        throw new Error("Invalid referral code. Please check and try again.");
+        setError("Invalid referral code. Please check and try again.");
+        return;
       }
 
       const doctor = doctors[0] as Doctor;
@@ -118,11 +119,7 @@ export function DoctorInviteForm() {
       setReferralCode("");
     } catch (error) {
       console.error("Error sending invitation:", error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to send invitation.",
-        variant: "destructive",
-      });
+      setError(error instanceof Error ? error.message : "Failed to send invitation.");
     } finally {
       setLoading(false);
     }
@@ -138,13 +135,24 @@ export function DoctorInviteForm() {
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
+          {error && (
+            <Alert variant="destructive" className="bg-red-500 text-white border-red-600">
+              <XCircle className="h-4 w-4 mr-2" />
+              <AlertDescription>
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
           <div className="space-y-2">
             <Label htmlFor="referral-code">Doctor's Referral Code</Label>
             <Input
               id="referral-code"
               placeholder="Enter code (e.g. DR1A2B)"
               value={referralCode}
-              onChange={(e) => setReferralCode(e.target.value)}
+              onChange={(e) => {
+                setReferralCode(e.target.value);
+                setError(null);
+              }}
               className="font-mono"
             />
           </div>

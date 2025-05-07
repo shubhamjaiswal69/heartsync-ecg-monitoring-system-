@@ -12,7 +12,7 @@ interface ViewerContentProps {
   patternType: string;
   onPatternChange: (pattern: string) => void;
   isLive: boolean;
-  onLiveToggle: () => void;
+  onLiveToggle: (checked: boolean) => void;
   heartRate: number;
 }
 
@@ -38,13 +38,13 @@ export function ViewerContent({
         />
         <LiveModeToggle 
           isLive={isLive} 
-          onLiveToggle={onLiveToggle} 
+          onToggle={onLiveToggle} 
         />
       </div>
       <div className="md:col-span-2 space-y-4">
         <DeviceInfoCard />
-        <PatientInfoCard patientId={selectedPatient} />
-        <SessionInfoCard heartRate={heartRate} />
+        <PatientInfoCard patient={selectedPatient} />
+        <SessionInfoCard minHeartRate={heartRate} maxHeartRate={heartRate + 5} avgHeartRate={heartRate} />
       </div>
     </div>
   );
