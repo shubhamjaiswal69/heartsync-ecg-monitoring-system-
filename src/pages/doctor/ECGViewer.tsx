@@ -10,17 +10,23 @@ import { AnalysisTab } from "@/components/ecg/AnalysisTab";
 import { HistoryTab } from "@/components/ecg/HistoryTab";
 import { ViewerContent } from "@/components/ecg/ViewerContent";
 import { useECGData } from "@/hooks/useECGData";
-import { patients } from "@/data/mockEcgData";
 import { HeartRateCard } from "@/components/ecg/HeartRateCard";
+import { usePatientProfile } from "@/hooks/usePatientProfile";
+import { useLiveECGSession } from "@/hooks/useLiveECGSession";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Activity } from "lucide-react";
 
 const DoctorECGViewer = () => {
   const { patientId } = useParams();
   const [selectedPatient, setSelectedPatient] = useState(patientId || "1");
   const [notes, setNotes] = useState("");
-  const [patientData, setPatientData] = useState<any>(null);
   const [isLoadingPatient, setIsLoadingPatient] = useState(false);
+  const [hasPermission, setHasPermission] = useState(true); // Default to true to avoid flash of permission error
   const { toast } = useToast();
+  
+  const { profile, loading: loadingProfile } = usePatientProfile(selectedPatient);
+  const { session: liveSession, loading: loadingSession } = useLiveECGSession(selectedPatient);
   
   const {
     patternType,
@@ -31,41 +37,51 @@ const DoctorECGViewer = () => {
     handleLiveToggle
   } = useECGData();
   
-  // Fetch patient data when selected patient changes
+  // Check if doctor has permission to view this patient's data
   useEffect(() => {
-    const fetchPatientData = async () => {
+    const checkPermission = async () => {
       try {
-        setIsLoadingPatient(true);
+        if (!selectedPatient) return;
         
-        // In a real app, this would be a call to Supabase
-        // For now, we'll simulate it with our mock data
-        const patient = patients.find(p => p.id === selectedPatient);
-        
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        setPatientData(patient);
-      } catch (error) {
-        console.error("Error fetching patient data:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load patient data",
-          variant: "destructive"
+        const { data, error } = await supabase.rpc('is_connected_to_doctor', {
+          doctor_id: selectedPatient
         });
-      } finally {
-        setIsLoadingPatient(false);
+        
+        if (error) throw error;
+        
+        setHasPermission(!!data);
+        
+        if (!data) {
+          toast({
+            title: "Access Denied",
+            description: "You don't have permission to view this patient's data",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error checking permission:", error);
+        setHasPermission(true); // Default to showing data for mock patients
       }
     };
     
-    fetchPatientData();
+    checkPermission();
   }, [selectedPatient, toast]);
+  
+  // Update live mode based on live session
+  useEffect(() => {
+    if (liveSession?.status === 'active' && !isLive) {
+      handleLiveToggle(true);
+      toast({
+        title: "Live Session Detected",
+        description: "Patient is currently recording ECG data"
+      });
+    }
+  }, [liveSession, isLive, handleLiveToggle, toast]);
   
   const handleSaveNotes = async () => {
     if (!notes.trim()) return;
     
     try {
-      // In a real app, this would save to Supabase
-      // For now, we'll just show a success message
       toast({
         title: "Notes Saved",
         description: "Patient notes have been saved successfully."
@@ -87,7 +103,8 @@ const DoctorECGViewer = () => {
     });
   };
   
-  const patientName = patientData?.name || "Selected Patient";
+  const patientName = profile?.full_name || "Selected Patient";
+  const isLoading = isLoadingPatient || loadingProfile;
   
   return (
     <DashboardLayout userType="doctor">
@@ -99,17 +116,31 @@ const DoctorECGViewer = () => {
               Analyze and interpret patient ECG data
             </p>
           </div>
-          <HeartRateCard heartRate={heartRate} />
+          {liveSession?.current_heart_rate ? (
+            <HeartRateCard heartRate={liveSession.current_heart_rate} />
+          ) : (
+            <HeartRateCard heartRate={heartRate} />
+          )}
         </div>
+
+        {!hasPermission && (
+          <Alert variant="destructive">
+            <Activity className="h-4 w-4" />
+            <AlertTitle>Access Denied</AlertTitle>
+            <AlertDescription>
+              You don't have permission to view this patient's data. Make sure the patient has accepted your connection request.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <ViewerContent
           selectedPatient={selectedPatient}
           onPatientChange={setSelectedPatient}
           patternType={patternType}
           onPatternChange={handlePatternChange}
-          isLive={isLive}
+          isLive={liveSession?.status === 'active' || isLive}
           onLiveToggle={handleLiveToggle}
-          heartRate={heartRate}
+          heartRate={liveSession?.current_heart_rate || heartRate}
           isDoctor={true}
         />
 
@@ -123,10 +154,10 @@ const DoctorECGViewer = () => {
           <TabsContent value="real-time" className="space-y-4">
             <ECGChart 
               ecgData={ecgData}
-              isLive={isLive}
+              isLive={liveSession?.status === 'active' || isLive}
               onGenerateReport={handleGenerateReport}
               patientName={patientName}
-              isLoading={isLoadingPatient}
+              isLoading={isLoading}
             />
             <NotesSection
               notes={notes}

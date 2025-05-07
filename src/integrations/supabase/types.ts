@@ -54,6 +54,45 @@ export type Database = {
           },
         ]
       }
+      ecg_live_sessions: {
+        Row: {
+          created_at: string
+          current_heart_rate: number | null
+          device_id: string | null
+          ended_at: string | null
+          id: string
+          patient_id: string
+          session_notes: string | null
+          started_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_heart_rate?: number | null
+          device_id?: string | null
+          ended_at?: string | null
+          id?: string
+          patient_id: string
+          session_notes?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_heart_rate?: number | null
+          device_id?: string | null
+          ended_at?: string | null
+          id?: string
+          patient_id?: string
+          session_notes?: string | null
+          started_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ecg_recordings: {
         Row: {
           created_at: string
@@ -135,6 +174,54 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      patient_profiles: {
+        Row: {
+          age: number | null
+          allergies: string | null
+          blood_type: string | null
+          created_at: string
+          current_medications: string | null
+          emergency_contact: string | null
+          full_name: string | null
+          gender: string | null
+          height: number | null
+          id: string
+          medical_history: string | null
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          age?: number | null
+          allergies?: string | null
+          blood_type?: string | null
+          created_at?: string
+          current_medications?: string | null
+          emergency_contact?: string | null
+          full_name?: string | null
+          gender?: string | null
+          height?: number | null
+          id: string
+          medical_history?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          age?: number | null
+          allergies?: string | null
+          blood_type?: string | null
+          created_at?: string
+          current_medications?: string | null
+          emergency_contact?: string | null
+          full_name?: string | null
+          gender?: string | null
+          height?: number | null
+          id?: string
+          medical_history?: string | null
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {

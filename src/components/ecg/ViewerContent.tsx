@@ -9,6 +9,8 @@ import { patients } from "@/data/mockEcgData";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Activity, AlertCircle, CheckCircle } from "lucide-react";
+import { usePatientProfile } from "@/hooks/usePatientProfile";
+import { useLiveECGSession } from "@/hooks/useLiveECGSession";
 
 interface ViewerContentProps {
   selectedPatient: string;
@@ -31,8 +33,15 @@ export function ViewerContent({
   heartRate,
   isDoctor = false
 }: ViewerContentProps) {
-  // Find the patient object that matches the selectedPatient ID
-  const patient = patients.find(p => p.id === selectedPatient) || patients[0];
+  // Try to load real patient profile from Supabase
+  const { profile, loading: loadingProfile } = usePatientProfile(selectedPatient);
+  const { session, loading: loadingSession } = useLiveECGSession(selectedPatient);
+  
+  // Fall back to mock data if no real patient data is available
+  const mockPatient = patients.find(p => p.id === selectedPatient) || patients[0];
+  
+  // Determine if we're using a real patient or mock data
+  const isRealPatient = !!profile;
   
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -97,12 +106,30 @@ export function ViewerContent({
       
       <div className="md:col-span-2 space-y-4">
         <DeviceInfoCard />
-        <PatientInfoCard patient={patient} />
+        {isRealPatient ? (
+          <PatientInfoCard patient={profile} loading={loadingProfile} />
+        ) : (
+          <PatientInfoCard 
+            patient={{
+              id: mockPatient.id,
+              full_name: mockPatient.name,
+              age: mockPatient.age,
+              gender: null,
+              blood_type: null,
+              height: null,
+              weight: null,
+              medical_history: mockPatient.condition,
+              allergies: null,
+              current_medications: null,
+              emergency_contact: null
+            }} 
+          />
+        )}
         <SessionInfoCard 
           isRecording={isLive} 
-          minHeartRate={heartRate} 
-          maxHeartRate={heartRate + 5} 
-          avgHeartRate={heartRate} 
+          minHeartRate={session?.current_heart_rate || heartRate - 2} 
+          maxHeartRate={session?.current_heart_rate || heartRate + 5} 
+          avgHeartRate={session?.current_heart_rate || heartRate} 
         />
       </div>
     </div>

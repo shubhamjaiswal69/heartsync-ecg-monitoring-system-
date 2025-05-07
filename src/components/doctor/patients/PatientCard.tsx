@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface Patient {
-  id: number;
+  id: number | string;
   name: string;
   age: number;
   gender: string;
@@ -70,9 +70,11 @@ export function PatientCard({ patient }: PatientCardProps) {
               View ECG
             </Link>
           </Button>
-          <Button variant="outline" className="w-full">
-            <Eye className="mr-2 h-4 w-4" />
-            Patient Profile
+          <Button variant="outline" className="w-full" asChild>
+            <Link to={`/doctor/patient-profile/${patient.id}`}>
+              <Eye className="mr-2 h-4 w-4" />
+              Patient Profile
+            </Link>
           </Button>
           <Button variant="outline" className="w-full">
             <FileText className="mr-2 h-4 w-4" />
