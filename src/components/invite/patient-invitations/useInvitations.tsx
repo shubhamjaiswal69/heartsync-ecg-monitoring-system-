@@ -50,7 +50,14 @@ export function useInvitations() {
       }
 
       console.log("Fetched invitations:", data);
-      setInvitations(data as unknown as Invitation[]);
+      
+      // Ensure each invitation has a patient, even if null
+      const processedData = data.map((item: any) => ({
+        ...item,
+        patient: item.patient || null
+      }));
+      
+      setInvitations(processedData as Invitation[]);
     } catch (error) {
       console.error("Error fetching invitations:", error);
       toast({

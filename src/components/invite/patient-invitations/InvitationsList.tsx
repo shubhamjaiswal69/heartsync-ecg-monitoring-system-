@@ -12,7 +12,7 @@ type Patient = {
 export type Invitation = {
   id: string;
   created_at: string;
-  patient: Patient;
+  patient: Patient | null;
   status: string;
 };
 

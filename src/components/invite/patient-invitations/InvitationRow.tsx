@@ -12,13 +12,15 @@ type Patient = {
 
 type InvitationRowProps = {
   id: string;
-  patient: Patient;
+  patient: Patient | null;
   createdAt: string;
   onAccept: (id: string, patientName: string) => void;
   onReject: (id: string, patientName: string) => void;
 };
 
-export function getPatientName(patient: Patient) {
+export function getPatientName(patient: Patient | null) {
+  if (!patient) return "Unknown Patient";
+  
   if (patient.first_name && patient.last_name) {
     return `${patient.first_name} ${patient.last_name}`;
   } else if (patient.first_name) {
