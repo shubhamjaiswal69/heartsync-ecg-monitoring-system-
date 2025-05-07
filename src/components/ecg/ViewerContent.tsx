@@ -6,6 +6,9 @@ import { DeviceInfoCard } from "./DeviceInfoCard";
 import { PatientInfoCard } from "./PatientInfoCard";
 import { SessionInfoCard } from "./SessionInfoCard";
 import { patients } from "@/data/mockEcgData";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Activity, AlertCircle, CheckCircle } from "lucide-react";
 
 interface ViewerContentProps {
   selectedPatient: string;
@@ -15,6 +18,7 @@ interface ViewerContentProps {
   isLive: boolean;
   onLiveToggle: (checked: boolean) => void;
   heartRate: number;
+  isDoctor?: boolean;
 }
 
 export function ViewerContent({
@@ -24,7 +28,8 @@ export function ViewerContent({
   onPatternChange,
   isLive,
   onLiveToggle,
-  heartRate
+  heartRate,
+  isDoctor = false
 }: ViewerContentProps) {
   // Find the patient object that matches the selectedPatient ID
   const patient = patients.find(p => p.id === selectedPatient) || patients[0];
@@ -44,7 +49,52 @@ export function ViewerContent({
           isLive={isLive} 
           onToggle={onLiveToggle} 
         />
+        
+        {isDoctor && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Analysis Tools</CardTitle>
+              <CardDescription>Tools for ECG interpretation</CardDescription>
+            </CardHeader>
+            <CardContent className="p-4">
+              <ScrollArea className="h-[160px] px-1">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <Activity className="h-4 w-4 mt-0.5 text-primary" />
+                    <div>
+                      <h4 className="text-sm font-medium">Rate Analysis</h4>
+                      <p className="text-xs text-muted-foreground">Heart rate is {heartRate > 100 ? 'elevated' : heartRate < 60 ? 'low' : 'normal'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-2">
+                    <CheckCircle className="h-4 w-4 mt-0.5 text-green-500" />
+                    <div>
+                      <h4 className="text-sm font-medium">Rhythm Analysis</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {patternType === 'normal' ? 'Normal sinus rhythm' : 
+                         patternType === 'tachycardia' ? 'Tachycardia detected' : 
+                         'Irregular rhythm detected'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 mt-0.5 text-yellow-500" />
+                    <div>
+                      <h4 className="text-sm font-medium">Anomaly Detection</h4>
+                      <p className="text-xs text-muted-foreground">
+                        {patternType === 'arrhythmia' ? 'Potential arrhythmia detected' : 'No anomalies detected'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        )}
       </div>
+      
       <div className="md:col-span-2 space-y-4">
         <DeviceInfoCard />
         <PatientInfoCard patient={patient} />
