@@ -22,7 +22,8 @@ export function PatientInfoCard({ patient }: PatientInfoCardProps) {
       return "destructive";
     } else if (condition.toLowerCase().includes('hypertension') ||
                condition.toLowerCase().includes('tachycardia')) {
-      return "warning";
+      // Change from "warning" to "secondary" since "warning" is not a supported variant
+      return "secondary";
     } else {
       return "secondary";
     }
