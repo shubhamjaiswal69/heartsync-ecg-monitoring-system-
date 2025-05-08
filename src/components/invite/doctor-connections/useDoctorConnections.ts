@@ -11,6 +11,7 @@ export type DoctorConnection = {
     last_name: string | null;
     email: string;
   };
+  status: string;
 };
 
 export function useDoctorConnections() {
@@ -34,10 +35,12 @@ export function useDoctorConnections() {
       }
 
       // Get all accepted connections where the current user is the patient
+      // and filter out any with "removed" status
       const { data, error } = await supabase
         .from('doctor_patient_relationships')
         .select(`
           id,
+          status,
           doctor:doctor_id(
             id,
             first_name,
