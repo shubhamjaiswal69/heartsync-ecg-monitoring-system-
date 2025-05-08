@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -27,7 +28,7 @@ const PatientProfile = () => {
       
       try {
         const { data, error } = await supabase.rpc('is_connected_to_doctor', {
-          patient_id: patientId
+          doctor_id: patientId
         });
         
         if (error) throw error;
