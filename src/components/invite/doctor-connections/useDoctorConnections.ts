@@ -12,10 +12,12 @@ export type DoctorConnection = {
     email: string;
   };
   status: string;
+  removed_at?: string | null;
 };
 
 export function useDoctorConnections() {
   const [connections, setConnections] = useState<DoctorConnection[]>([]);
+  const [previousConnections, setPreviousConnections] = useState<DoctorConnection[]>([]);
   const [loading, setLoading] = useState(true);
   const [removingConnection, setRemovingConnection] = useState<string | null>(null);
   const { toast } = useToast();
@@ -35,8 +37,7 @@ export function useDoctorConnections() {
       }
 
       // Get all accepted connections where the current user is the patient
-      // and exclude any with "removed" status
-      const { data, error } = await supabase
+      const { data: activeData, error: activeError } = await supabase
         .from('doctor_patient_relationships')
         .select(`
           id,
@@ -51,9 +52,29 @@ export function useDoctorConnections() {
         .eq('patient_id', user.id)
         .eq('status', 'accepted');
 
-      if (error) throw error;
+      if (activeError) throw activeError;
 
-      setConnections(data as unknown as DoctorConnection[]);
+      // Get all removed connections
+      const { data: removedData, error: removedError } = await supabase
+        .from('doctor_patient_relationships')
+        .select(`
+          id,
+          status,
+          removed_at,
+          doctor:doctor_id(
+            id,
+            first_name,
+            last_name,
+            email
+          )
+        `)
+        .eq('patient_id', user.id)
+        .eq('status', 'removed');
+
+      if (removedError) throw removedError;
+
+      setConnections(activeData as unknown as DoctorConnection[]);
+      setPreviousConnections(removedData as unknown as DoctorConnection[]);
     } catch (error) {
       console.error("Error fetching connected doctors:", error);
       toast({
@@ -70,10 +91,13 @@ export function useDoctorConnections() {
     try {
       setRemovingConnection(connectionId);
       
-      // Update the status to 'removed' instead of deleting
+      // Update the status to 'removed' and set removed_at timestamp
       const { error } = await supabase
         .from('doctor_patient_relationships')
-        .update({ status: 'removed' })
+        .update({ 
+          status: 'removed',
+          removed_at: new Date().toISOString()
+        })
         .eq('id', connectionId);
       
       if (error) throw error;
@@ -81,10 +105,8 @@ export function useDoctorConnections() {
       // Remove from the local state
       setConnections(prev => prev.filter(conn => conn.id !== connectionId));
       
-      toast({
-        title: "Success",
-        description: "Doctor removed successfully. They can no longer access your medical data.",
-      });
+      // Refresh connections to update the previousConnections list
+      fetchConnectedDoctors();
       
       return true;
     } catch (error) {
@@ -106,6 +128,7 @@ export function useDoctorConnections() {
 
   return {
     connections,
+    previousConnections,
     loading,
     removingConnection,
     removeDoctor,

@@ -3,6 +3,8 @@ import DashboardLayout from "@/components/layout/DashboardLayout";
 import { DoctorInviteForm } from "@/components/invite/DoctorInviteForm";
 import { ConnectedDoctors } from "@/components/invite/ConnectedDoctors";
 import { PendingInvitations } from "@/components/invite/PendingInvitations";
+import { PreviousConnectedDoctors } from "@/components/invite/PreviousConnectedDoctors";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const PatientInviteDoctor = () => {
   return (
@@ -17,13 +19,24 @@ const PatientInviteDoctor = () => {
           <DoctorInviteForm />
           
           <div className="space-y-6">
-            <ConnectedDoctors />
-            <PendingInvitations />
+            <Tabs defaultValue="active" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="active">Active</TabsTrigger>
+                <TabsTrigger value="previous">Previous</TabsTrigger>
+              </TabsList>
+              <TabsContent value="active" className="space-y-6 pt-4">
+                <ConnectedDoctors />
+                <PendingInvitations />
+              </TabsContent>
+              <TabsContent value="previous" className="space-y-6 pt-4">
+                <PreviousConnectedDoctors />
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       </div>
     </DashboardLayout>
   );
-};
+}
 
 export default PatientInviteDoctor;

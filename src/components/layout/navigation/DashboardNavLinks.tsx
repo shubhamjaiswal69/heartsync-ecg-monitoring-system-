@@ -6,7 +6,8 @@ import {
   UserPlus, 
   History, 
   FileText, 
-  Users
+  Users,
+  Users as UsersIcon
 } from "lucide-react";
 
 interface NavLink {
@@ -63,6 +64,11 @@ const doctorLinks: NavLink[] = [
     name: "Manage Invitations", 
     path: "/doctor/manage-invitations", 
     icon: UserPlus
+  },
+  { 
+    name: "Previous Connections", 
+    path: "/doctor/previous-connections", 
+    icon: UsersIcon
   },
   { 
     name: "Reports", 
