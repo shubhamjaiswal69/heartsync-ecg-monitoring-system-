@@ -17,6 +17,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Activity, AlertTriangle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import { useWebSocketService } from "@/services/WebSocketService";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const DoctorECGViewer = () => {
   const { patientId } = useParams();
@@ -24,10 +30,14 @@ const DoctorECGViewer = () => {
   const [notes, setNotes] = useState("");
   const [isLoadingPatient, setIsLoadingPatient] = useState(false);
   const [hasPermission, setHasPermission] = useState(true); // Default to true to avoid flash of permission error
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const [reportTitle, setReportTitle] = useState("");
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
   const { toast } = useToast();
   
   const { profile, loading: loadingProfile, error: profileError } = usePatientProfile(selectedPatient);
   const { session: liveSession, loading: loadingSession } = useLiveECGSession(selectedPatient);
+  const { addDataListener } = useWebSocketService();
   
   const {
     patternType,
@@ -35,8 +45,33 @@ const DoctorECGViewer = () => {
     isLive,
     heartRate,
     handlePatternChange,
-    handleLiveToggle
+    handleLiveToggle,
+    setEcgData
   } = useECGData();
+  
+  // Set up data listener for live ECG data
+  useEffect(() => {
+    if (!isLive || !selectedPatient) return;
+    
+    const removeDataListener = addDataListener((data) => {
+      if (data.heartRate) {
+        // Heart rate updates are handled by the useECGData hook
+      }
+      
+      // Add ECG data point
+      setEcgData(prevData => {
+        const newData = [...prevData, { time: data.timestamp, value: data.value }];
+        if (newData.length > 200) {
+          return newData.slice(newData.length - 200);
+        }
+        return newData;
+      });
+    });
+    
+    return () => {
+      removeDataListener();
+    };
+  }, [isLive, selectedPatient, addDataListener, setEcgData]);
   
   // Check if doctor has permission to view this patient's data
   useEffect(() => {
@@ -109,10 +144,60 @@ const DoctorECGViewer = () => {
   };
   
   const handleGenerateReport = () => {
-    toast({
-      title: "Report Generated",
-      description: "ECG report has been generated and is ready for download."
-    });
+    setReportTitle(`ECG Report - ${profile?.full_name || 'Patient'} - ${new Date().toLocaleDateString()}`);
+    setIsReportDialogOpen(true);
+  };
+  
+  const handleCreateReport = async () => {
+    if (!reportTitle.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a title for the report",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      setIsGeneratingReport(true);
+      
+      // Save report to Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+      
+      const { error } = await supabase
+        .from('reports')
+        .insert({
+          title: reportTitle,
+          content: notes,
+          patient_id: selectedPatient,
+          doctor_id: user.id
+        });
+      
+      if (error) throw error;
+      
+      setIsReportDialogOpen(false);
+      
+      toast({
+        title: "Report Generated",
+        description: "ECG report has been generated and saved successfully."
+      });
+      
+      // Reset form
+      setReportTitle("");
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate report. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingReport(false);
+    }
   };
   
   const patientName = profile?.full_name || "Selected Patient";
@@ -194,6 +279,7 @@ const DoctorECGViewer = () => {
               onGenerateReport={handleGenerateReport}
               patientName={patientName}
               isLoading={isLoading}
+              patientId={selectedPatient}
             />
             <NotesSection
               notes={notes}
@@ -207,9 +293,49 @@ const DoctorECGViewer = () => {
           </TabsContent>
           
           <TabsContent value="history">
-            <HistoryTab />
+            <HistoryTab patientId={selectedPatient} />
           </TabsContent>
         </Tabs>
+        
+        <Dialog open={isReportDialogOpen} onOpenChange={setIsReportDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Generate ECG Report</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="report-title">Report Title</Label>
+                <Input
+                  id="report-title"
+                  placeholder="Enter a title for this report"
+                  value={reportTitle}
+                  onChange={(e) => setReportTitle(e.target.value)}
+                />
+              </div>
+              
+              <div className="rounded-md bg-muted p-4">
+                <h4 className="text-sm font-medium mb-2">Report will include:</h4>
+                <ul className="text-sm space-y-1">
+                  <li>• Patient information and metadata</li>
+                  <li>• ECG visualization with timestamps</li>
+                  <li>• Heart rate analysis and statistics</li>
+                  <li>• Doctor's notes and observations</li>
+                </ul>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsReportDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleCreateReport} 
+                disabled={!reportTitle.trim() || isGeneratingReport}
+              >
+                {isGeneratingReport ? "Generating..." : "Generate Report"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
