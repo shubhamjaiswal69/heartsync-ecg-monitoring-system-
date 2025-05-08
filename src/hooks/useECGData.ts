@@ -46,6 +46,6 @@ export const useECGData = () => {
     heartRate,
     handlePatternChange,
     handleLiveToggle,
-    setEcgData
+    setEcgData  // Export this function so it can be used by ECGViewer
   };
 };

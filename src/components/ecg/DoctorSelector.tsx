@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -40,7 +39,7 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
           return;
         }
 
-        // Updated query to exclude removed relationships
+        // Updated query to exclude removed relationships and handle avatar_url column
         const { data, error } = await supabase
           .from('doctor_patient_relationships')
           .select(`
@@ -49,8 +48,7 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
               id,
               first_name,
               last_name,
-              email,
-              avatar_url
+              email
             )
           `)
           .eq('patient_id', user.id)
@@ -64,7 +62,7 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
           first_name: item.doctor.first_name,
           last_name: item.doctor.last_name,
           email: item.doctor.email,
-          avatar_url: item.doctor.avatar_url
+          avatar_url: null // Set a default value since we don't have this field yet
         }));
         
         setDoctors(connectedDoctors);
@@ -88,7 +86,7 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
             variant: "destructive",
           });
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching connected doctors:", error);
         setError("Failed to load your connected doctors. Please try again.");
       } finally {

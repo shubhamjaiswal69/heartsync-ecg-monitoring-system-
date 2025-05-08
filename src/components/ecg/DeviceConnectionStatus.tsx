@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,12 +7,12 @@ import { Smartphone, Battery, Wifi, WifiOff } from "lucide-react";
 import { type DeviceConnectionStatus as DeviceConnectionStatusType, useWebSocketService } from "@/services/WebSocketService";
 import { useToast } from "@/hooks/use-toast";
 
-interface DeviceConnectionStatusProps {
+interface DeviceStatusProps {
   patientId: string;
   deviceId?: string;
 }
 
-export function DeviceConnectionStatus({ patientId, deviceId = "ESP32-ECG-01" }: DeviceConnectionStatusProps) {
+export function DeviceConnectionStatus({ patientId, deviceId = "ESP32-ECG-01" }: DeviceStatusProps) {
   const [connectionStatus, setConnectionStatus] = useState<DeviceConnectionStatusType>('disconnected');
   const [batteryLevel, setBatteryLevel] = useState<number>(0);
   const { connectToDevice, disconnectFromDevice, addStatusListener, addDataListener } = useWebSocketService();
