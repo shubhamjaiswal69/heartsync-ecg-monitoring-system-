@@ -92,6 +92,27 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
     };
 
     fetchConnectedDoctors();
+
+    // Set up realtime subscription to reflect removed connections
+    const channel = supabase
+      .channel('doctor-patient-changes')
+      .on('postgres_changes', 
+        {
+          event: '*',
+          schema: 'public',
+          table: 'doctor_patient_relationships'
+        }, 
+        (payload) => {
+          console.log('Doctor relationship change:', payload);
+          // Refresh doctor list when relationship changes
+          fetchConnectedDoctors();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [selectedDoctor, onDoctorChange, toast]);
 
   const getDoctorName = (doctor: Doctor) => {

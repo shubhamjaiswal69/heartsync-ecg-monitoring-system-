@@ -6,9 +6,14 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { Info } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export function PreviousConnectedDoctors() {
-  const { previousConnections, loading } = useDoctorConnections();
+  const { previousConnections, loading, refreshConnections } = useDoctorConnections();
+  const [reconnectingDoctor, setReconnectingDoctor] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const getDoctorInitials = (doctor: DoctorConnection['doctor']) => {
     const first = doctor.first_name?.[0] || '';
@@ -23,6 +28,63 @@ export function PreviousConnectedDoctors() {
       return `Dr. ${doctor.first_name}`;
     } else {
       return doctor.email;
+    }
+  };
+
+  const handleReconnect = async (connection: DoctorConnection) => {
+    try {
+      setReconnectingDoctor(connection.id);
+      
+      // Get doctor's current referral code
+      const { data: doctorData, error: doctorError } = await supabase
+        .from('profiles')
+        .select('referral_code')
+        .eq('id', connection.doctor.id)
+        .single();
+        
+      if (doctorError) throw doctorError;
+      
+      if (!doctorData.referral_code) {
+        toast({
+          title: "Cannot Reconnect",
+          description: "This doctor doesn't have an active referral code. Please ask them to generate a new one.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // Create a new connection with the doctor's current referral code
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error("You must be logged in to reconnect with a doctor");
+      
+      const { error: insertError } = await supabase
+        .from('doctor_patient_relationships')
+        .insert({
+          doctor_id: connection.doctor.id,
+          patient_id: user.id,
+          referral_code: doctorData.referral_code,
+          status: 'accepted'
+        });
+        
+      if (insertError) throw insertError;
+      
+      toast({
+        title: "Reconnection successful",
+        description: `You are now reconnected with ${getDoctorName(connection.doctor)}.`,
+      });
+      
+      // Refresh the connections list
+      refreshConnections();
+    } catch (error) {
+      console.error("Error reconnecting with doctor:", error);
+      toast({
+        title: "Reconnection failed",
+        description: "There was an error trying to reconnect with this doctor. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setReconnectingDoctor(null);
     }
   };
 
@@ -46,7 +108,7 @@ export function PreviousConnectedDoctors() {
             <Alert className="bg-blue-50 border-blue-200">
               <Info className="h-4 w-4 text-blue-500" />
               <AlertDescription>
-                To reconnect with any of these doctors, you'll need to receive a new invitation code from them.
+                To reconnect with any of these doctors, you'll need to receive a new invitation code from them or use the reconnect button.
               </AlertDescription>
             </Alert>
             
@@ -67,6 +129,15 @@ export function PreviousConnectedDoctors() {
                       )}
                     </div>
                   </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => handleReconnect(connection)}
+                    disabled={reconnectingDoctor === connection.id}
+                    className="text-primary"
+                  >
+                    {reconnectingDoctor === connection.id ? "Reconnecting..." : "Reconnect"}
+                  </Button>
                 </div>
               ))}
             </div>
