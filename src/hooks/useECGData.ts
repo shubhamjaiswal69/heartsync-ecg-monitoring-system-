@@ -45,6 +45,7 @@ export const useECGData = () => {
     isLive,
     heartRate,
     handlePatternChange,
-    handleLiveToggle
+    handleLiveToggle,
+    setEcgData
   };
 };

@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { FileText, Download, Save, Refresh } from "lucide-react";
+import { FileText, Download, Save, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface ChartActionsProps {
@@ -53,7 +53,7 @@ export function ChartActions({
     <div className="flex justify-end p-4 pt-0 gap-2">
       {onRefresh && (
         <Button variant="outline" size="sm" onClick={handleRefresh}>
-          <Refresh className="mr-2 h-4 w-4" />
+          <RefreshCw className="mr-2 h-4 w-4" />
           Refresh
         </Button>
       )}

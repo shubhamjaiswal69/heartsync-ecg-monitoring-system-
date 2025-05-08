@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/DashboardLayout";
 import { HeartRateCard } from "@/components/ecg/HeartRateCard";
@@ -8,6 +7,7 @@ import { SessionInfoCard } from "@/components/ecg/SessionInfoCard";
 import { DoctorSelector } from "@/components/ecg/DoctorSelector";
 import { Button } from "@/components/ui/button";
 import { DeviceConnectionStatus } from "@/components/ecg/DeviceConnectionStatus";
+import { DeviceDiscovery } from "@/components/ecg/DeviceDiscovery";
 import { useWebSocketService } from "@/services/WebSocketService";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Mock ECG data generator function
 const generateECGData = (length = 100) => {
@@ -51,6 +52,8 @@ const PatientECGViewer = () => {
   const [isSaveSessionDialogOpen, setIsSaveSessionDialogOpen] = useState(false);
   const [sessionTitle, setSessionTitle] = useState("");
   const [sessionNotes, setSessionNotes] = useState("");
+  const [isDiscoveryDialogOpen, setIsDiscoveryDialogOpen] = useState(false);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | undefined>("ESP32-ECG-01");
   
   const { toast } = useToast();
   const { addDataListener } = useWebSocketService();
@@ -179,6 +182,16 @@ const PatientECGViewer = () => {
     }, 2000);
   };
 
+  const handleDeviceSelected = (deviceId: string) => {
+    setSelectedDeviceId(deviceId);
+    setIsDiscoveryDialogOpen(false);
+    
+    toast({
+      title: "Device Selected",
+      description: `Device ${deviceId} has been selected and is ready to connect`,
+    });
+  };
+
   return (
     <DashboardLayout userType="patient">
       <div className="space-y-6">
@@ -230,8 +243,28 @@ const PatientECGViewer = () => {
           </div>
 
           <div className="space-y-6">
-            {patientId && <DeviceConnectionStatus patientId={patientId} />}
-            <DeviceInfoCard patientId={patientId || undefined} />
+            <Tabs defaultValue="status">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="status">Device Status</TabsTrigger>
+                <TabsTrigger value="discovery">Find Devices</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="status">
+                {patientId && <DeviceConnectionStatus patientId={patientId} deviceId={selectedDeviceId} />}
+              </TabsContent>
+              
+              <TabsContent value="discovery">
+                <Button 
+                  onClick={() => setIsDiscoveryDialogOpen(true)} 
+                  variant="outline" 
+                  className="w-full"
+                >
+                  Discover Nearby Devices
+                </Button>
+              </TabsContent>
+            </Tabs>
+            
+            <DeviceInfoCard patientId={patientId || undefined} deviceId={selectedDeviceId} />
           </div>
         </div>
 
@@ -276,6 +309,20 @@ const PatientECGViewer = () => {
                 {isLoading ? "Saving..." : "Save Session"}
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog open={isDiscoveryDialogOpen} onOpenChange={setIsDiscoveryDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Discover ECG Devices</DialogTitle>
+            </DialogHeader>
+            {patientId && (
+              <DeviceDiscovery 
+                patientId={patientId} 
+                onDeviceSelected={handleDeviceSelected} 
+              />
+            )}
           </DialogContent>
         </Dialog>
       </div>
