@@ -108,6 +108,7 @@ export function useDoctorConnections() {
     connections,
     loading,
     removingConnection,
-    removeDoctor
+    removeDoctor,
+    refreshConnections: fetchConnectedDoctors
   };
 }

@@ -4,7 +4,7 @@ import { ReferralCodeGenerator } from "@/components/invite/ReferralCodeGenerator
 import { PatientInvitations } from "@/components/invite/PatientInvitations";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Info } from "lucide-react";
+import { Info, AlertTriangle } from "lucide-react";
 
 const DoctorManageInvitations = () => {
   return (
@@ -23,6 +23,16 @@ const DoctorManageInvitations = () => {
             if you wish to reconnect. Any pending invitations will remain visible to patients 
             unless they explicitly accept or reject them. You will no longer see patients' data 
             after they remove the connection.
+          </AlertDescription>
+        </Alert>
+
+        <Alert variant="destructive" className="bg-red-50 border-red-200">
+          <AlertTriangle className="h-4 w-4 text-red-500" />
+          <AlertTitle>Removed Connections</AlertTitle>
+          <AlertDescription>
+            If a patient has removed their connection with you, you'll need to generate a new referral 
+            code and share it with them to reestablish the connection. The previous connection cannot 
+            be restored automatically.
           </AlertDescription>
         </Alert>
 

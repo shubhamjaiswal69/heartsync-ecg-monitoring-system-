@@ -7,7 +7,7 @@ import { ConfirmRemoveDialog } from "./doctor-connections/ConfirmRemoveDialog";
 import { useToast } from "@/hooks/use-toast";
 
 export function ConnectedDoctors() {
-  const { connections, loading, removingConnection, removeDoctor } = useDoctorConnections();
+  const { connections, loading, removingConnection, removeDoctor, refreshConnections } = useDoctorConnections();
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<DoctorConnection | null>(null);
   const { toast } = useToast();
@@ -25,9 +25,12 @@ export function ConnectedDoctors() {
     if (success) {
       const doctorName = getDoctorName(selectedDoctor.doctor);
       toast({
-        title: "Success",
-        description: `${doctorName} has been removed from your connected doctors.`,
+        title: "Doctor connection removed",
+        description: `${doctorName} has been removed and can no longer access your medical data.`,
       });
+      
+      // Force refresh connections list
+      refreshConnections();
     }
     
     setConfirmDialogOpen(false);

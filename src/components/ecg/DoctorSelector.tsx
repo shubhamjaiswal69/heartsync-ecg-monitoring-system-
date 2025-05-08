@@ -70,6 +70,14 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
         } else if (connectedDoctors.length === 0 && selectedDoctor) {
           // If current selected doctor is no longer available, clear selection
           onDoctorChange('');
+        } else if (selectedDoctor && !connectedDoctors.some(d => d.id === selectedDoctor)) {
+          // If the selected doctor is no longer in the list (e.g., removed)
+          onDoctorChange('');
+          toast({
+            title: "Doctor connection removed",
+            description: "The selected doctor is no longer connected to your account.",
+            variant: "destructive",
+          });
         }
       } catch (error) {
         console.error("Error fetching connected doctors:", error);

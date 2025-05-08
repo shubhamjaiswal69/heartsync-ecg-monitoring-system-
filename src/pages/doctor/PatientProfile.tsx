@@ -178,7 +178,8 @@ const PatientProfile = () => {
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Access Denied</AlertTitle>
             <AlertDescription>
-              You don't have permission to view this patient's profile. Make sure the patient has accepted your connection request.
+              You don't have permission to view this patient's profile. The patient may have removed the connection.
+              If you wish to reconnect, you'll need to send a new invitation.
             </AlertDescription>
           </Alert>
         )}
