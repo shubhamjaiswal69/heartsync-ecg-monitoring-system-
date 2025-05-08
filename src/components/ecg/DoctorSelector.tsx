@@ -37,7 +37,7 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
           return;
         }
 
-        // Updated query to fix the relationship ambiguity
+        // Updated query to exclude removed relationships
         const { data, error } = await supabase
           .from('doctor_patient_relationships')
           .select(`
