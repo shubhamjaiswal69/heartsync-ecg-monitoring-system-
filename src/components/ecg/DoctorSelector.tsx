@@ -67,6 +67,9 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
         // Set first doctor as default if there's one and none is selected
         if (connectedDoctors.length > 0 && !selectedDoctor) {
           onDoctorChange(connectedDoctors[0].id);
+        } else if (connectedDoctors.length === 0 && selectedDoctor) {
+          // If current selected doctor is no longer available, clear selection
+          onDoctorChange('');
         }
       } catch (error) {
         console.error("Error fetching connected doctors:", error);

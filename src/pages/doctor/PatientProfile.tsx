@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/components/layout/DashboardLayout";
@@ -28,7 +27,7 @@ const PatientProfile = () => {
       
       try {
         const { data, error } = await supabase.rpc('is_connected_to_doctor', {
-          doctor_id: patientId
+          patient_id: patientId
         });
         
         if (error) throw error;
@@ -38,19 +37,28 @@ const PatientProfile = () => {
         if (!data) {
           toast({
             title: "Access Denied",
-            description: "You don't have permission to view this patient's profile",
+            description: "You don't have permission to view this patient's profile. The patient may have removed the connection.",
             variant: "destructive"
           });
+          
+          // Redirect to patients list if no permission
+          setTimeout(() => {
+            navigate("/doctor/patients");
+          }, 3000);
         }
       } catch (error) {
         console.error("Error checking permission:", error);
-        // For demo purposes, default to showing the profile even if there's an error
-        setHasPermission(true);
+        setHasPermission(false);
+        toast({
+          title: "Error",
+          description: "Failed to verify connection status with this patient.",
+          variant: "destructive"
+        });
       }
     };
     
     checkPermission();
-  }, [patientId, toast]);
+  }, [patientId, toast, navigate]);
 
   // Fetch the patient's ECG recordings
   useEffect(() => {
@@ -89,6 +97,34 @@ const PatientProfile = () => {
       <DashboardLayout userType="doctor">
         <div className="flex justify-center items-center h-[60vh]">
           <Spinner className="h-12 w-12" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!hasPermission) {
+    return (
+      <DashboardLayout userType="doctor">
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+            <Button variant="outline" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-3xl font-bold tracking-tight">Access Denied</h1>
+          </div>
+          
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Connection Removed</AlertTitle>
+            <AlertDescription>
+              You no longer have access to this patient's medical data. The patient may have removed the connection.
+              If you need to reconnect, you'll need to share your referral code with the patient again.
+            </AlertDescription>
+          </Alert>
+          
+          <Button onClick={() => navigate("/doctor/patients")}>
+            Return to Patient List
+          </Button>
         </div>
       </DashboardLayout>
     );

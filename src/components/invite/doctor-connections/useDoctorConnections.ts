@@ -35,7 +35,7 @@ export function useDoctorConnections() {
       }
 
       // Get all accepted connections where the current user is the patient
-      // and filter out any with "removed" status
+      // and exclude any with "removed" status
       const { data, error } = await supabase
         .from('doctor_patient_relationships')
         .select(`
@@ -80,6 +80,11 @@ export function useDoctorConnections() {
       
       // Remove from the local state
       setConnections(prev => prev.filter(conn => conn.id !== connectionId));
+      
+      toast({
+        title: "Success",
+        description: "Doctor removed successfully. They can no longer access your medical data.",
+      });
       
       return true;
     } catch (error) {

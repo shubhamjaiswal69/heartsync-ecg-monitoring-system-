@@ -21,7 +21,8 @@ const DoctorManageInvitations = () => {
           <AlertDescription>
             When a patient removes a connection, you'll need to send a new invitation request 
             if you wish to reconnect. Any pending invitations will remain visible to patients 
-            unless they explicitly accept or reject them.
+            unless they explicitly accept or reject them. You will no longer see patients' data 
+            after they remove the connection.
           </AlertDescription>
         </Alert>
 
