@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
@@ -39,7 +40,7 @@ export function DoctorSelector({ selectedDoctor, onDoctorChange }: DoctorSelecto
           return;
         }
 
-        // Updated query to exclude removed relationships and handle avatar_url column
+        // Updated query to exclude avatar_url since it doesn't exist in the profiles table
         const { data, error } = await supabase
           .from('doctor_patient_relationships')
           .select(`
