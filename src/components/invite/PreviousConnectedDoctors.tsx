@@ -43,7 +43,7 @@ export function PreviousConnectedDoctors() {
           </div>
         ) : (
           <div className="space-y-4">
-            <Alert variant="info" className="bg-blue-50 border-blue-200">
+            <Alert className="bg-blue-50 border-blue-200">
               <Info className="h-4 w-4 text-blue-500" />
               <AlertDescription>
                 To reconnect with any of these doctors, you'll need to receive a new invitation code from them.
