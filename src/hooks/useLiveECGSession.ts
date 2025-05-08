@@ -31,6 +31,8 @@ export function useLiveECGSession(patientId: string | undefined) {
         setLoading(true);
         setError(null);
 
+        // This query is protected by RLS policies
+        // Only returns data if the doctor has access to the patient
         const { data, error: fetchError } = await supabase
           .from("ecg_live_sessions")
           .select("*")

@@ -35,12 +35,19 @@ export function usePatientProfile(patientId: string | undefined) {
         setLoading(true);
         setError(null);
 
+        // For mock patients (numeric IDs), return immediately to avoid DB errors
+        if (!isNaN(Number(patientId))) {
+          setLoading(false);
+          return;
+        }
+
         // First get basic profile info (email, etc)
+        // This API call will be protected by RLS to only return data if the doctor has access
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("email, first_name, last_name")
           .eq("id", patientId)
-          .maybeSingle(); // Changed from single() to maybeSingle() to handle case where profile doesn't exist
+          .maybeSingle();
 
         if (profileError) {
           console.error("Error fetching profile:", profileError);
@@ -48,11 +55,12 @@ export function usePatientProfile(patientId: string | undefined) {
         }
 
         // Then get detailed patient profile
+        // This API call will be protected by RLS to only return data if the doctor has access
         const { data: patientProfileData, error: patientProfileError } = await supabase
           .from("patient_profiles")
           .select("*")
           .eq("id", patientId)
-          .maybeSingle(); // Changed from single() to maybeSingle()
+          .maybeSingle();
 
         if (patientProfileError && patientProfileError.code !== "PGRST116") {
           // PGRST116 means no rows returned, which is OK (might be a new user)

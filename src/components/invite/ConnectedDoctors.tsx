@@ -52,7 +52,6 @@ export function ConnectedDoctors() {
       }
 
       // Get all accepted connections where the current user is the patient
-      // Protected by the RLS policy "Patients can view invitations they sent"
       const { data, error } = await supabase
         .from('doctor_patient_relationships')
         .select(`
@@ -93,13 +92,15 @@ export function ConnectedDoctors() {
     try {
       setRemovingConnection(selectedDoctor.id);
       
+      // Instead of deleting, update the status to 'removed'
       const { error } = await supabase
         .from('doctor_patient_relationships')
-        .delete()
+        .update({ status: 'removed' })
         .eq('id', selectedDoctor.id);
       
       if (error) throw error;
       
+      // Remove from the local state
       setConnections(prev => prev.filter(conn => conn.id !== selectedDoctor.id));
       
       toast({

@@ -3,10 +3,11 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { X } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
-type PendingInvitation = {
+type DoctorInvitation = {
   id: string;
   created_at: string;
   doctor: {
@@ -18,8 +19,9 @@ type PendingInvitation = {
 };
 
 export function PendingInvitations() {
-  const [invitations, setInvitations] = useState<PendingInvitation[]>([]);
+  const [invitations, setInvitations] = useState<DoctorInvitation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelling, setCancelling] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,8 +42,6 @@ export function PendingInvitations() {
         return;
       }
 
-      // Get all pending invitations where the current user is the patient
-      // Protected by the RLS policy "Patients can view invitations they sent"
       const { data, error } = await supabase
         .from('doctor_patient_relationships')
         .select(`
@@ -58,8 +58,8 @@ export function PendingInvitations() {
         .eq('status', 'pending');
 
       if (error) throw error;
-
-      setInvitations(data as unknown as PendingInvitation[]);
+      
+      setInvitations(data as unknown as DoctorInvitation[]);
     } catch (error) {
       console.error("Error fetching pending invitations:", error);
       toast({
@@ -72,34 +72,52 @@ export function PendingInvitations() {
     }
   };
 
-  const handleCancel = async (invitationId: string) => {
+  const cancelInvitation = async (invitationId: string) => {
     try {
-      // This is protected by the RLS policy "Patients can delete pending invitations"
+      setCancelling(invitationId);
+      
+      // Update status to 'cancelled' instead of deleting
       const { error } = await supabase
         .from('doctor_patient_relationships')
-        .delete()
+        .update({ status: 'cancelled' })
         .eq('id', invitationId);
-
+      
       if (error) throw error;
-
-      // Update the local state
-      setInvitations(invitations.filter(inv => inv.id !== invitationId));
+      
+      setInvitations(prev => prev.filter(invitation => invitation.id !== invitationId));
       
       toast({
         title: "Invitation Cancelled",
-        description: "Your invitation has been cancelled.",
+        description: "The invitation has been cancelled successfully.",
       });
     } catch (error) {
       console.error("Error cancelling invitation:", error);
       toast({
         title: "Error",
-        description: "Failed to cancel invitation.",
+        description: "Failed to cancel invitation. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setCancelling(null);
     }
   };
 
-  const getDoctorName = (doctor: PendingInvitation['doctor']) => {
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const getDoctorInitials = (doctor: DoctorInvitation['doctor']) => {
+    const first = doctor.first_name?.[0] || '';
+    const last = doctor.last_name?.[0] || '';
+    return (first + last).toUpperCase() || doctor.email[0].toUpperCase();
+  };
+
+  const getDoctorName = (doctor: DoctorInvitation['doctor']) => {
     if (doctor.first_name && doctor.last_name) {
       return `Dr. ${doctor.first_name} ${doctor.last_name}`;
     } else if (doctor.first_name) {
@@ -112,9 +130,9 @@ export function PendingInvitations() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Pending Doctor Invitations</CardTitle>
+        <CardTitle>Pending Invitations</CardTitle>
         <CardDescription>
-          Invitations you've sent that are waiting for acceptance
+          Doctors you've invited who haven't accepted yet
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -127,20 +145,24 @@ export function PendingInvitations() {
         ) : (
           <div className="space-y-4">
             {invitations.map((invitation) => (
-              <div key={invitation.id} className="flex items-center justify-between p-3 bg-muted rounded-md">
-                <div>
-                  <p className="font-medium">{getDoctorName(invitation.doctor)}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Invited on {new Date(invitation.created_at).toLocaleDateString()}
-                  </p>
+              <div key={invitation.id} className="flex items-center justify-between gap-3 p-3 bg-muted rounded-md">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10 bg-primary">
+                    <AvatarFallback>{getDoctorInitials(invitation.doctor)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{getDoctorName(invitation.doctor)}</p>
+                    <p className="text-xs text-muted-foreground">Invited on {formatDate(invitation.created_at)}</p>
+                  </div>
                 </div>
-                <Button
-                  size="sm"
+                <Button 
                   variant="outline"
-                  className="h-8 w-8 p-0"
-                  onClick={() => handleCancel(invitation.id)}
+                  size="sm"
+                  onClick={() => cancelInvitation(invitation.id)}
+                  disabled={cancelling === invitation.id}
                 >
-                  <X size={16} className="text-red-500" />
+                  <ExternalLink size={14} className="mr-2" />
+                  Cancel
                 </Button>
               </div>
             ))}
